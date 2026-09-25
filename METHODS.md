@@ -75,6 +75,10 @@ The trend-based ranges show how much the answer depends on how far back you look
 confidence intervals, and they can't anticipate a crash, a boom or a wave election. The Census-based range covers
 immigration assumptions only. Mortality surprises, which matter more for people in their 60s–80s, are not in it.
 
+When some of the fitted trends never reach the threshold (for example because the share has recently been flat or
+rising), the range has no upper end, and the page says so ("2028 or later; 2 of 5 trends never get there") rather than
+printing the latest finite crossing as if it bounded the answer.
+
 ## Wealth
 
 **Source:** Federal Reserve Board, Distributional Financial Accounts (DFA), file `dfa-generation-levels.csv` in
@@ -93,6 +97,16 @@ What to know:
 - **Revisions.** The Fed revises back data every quarter. When a quarter we've already displayed changes, the old and
   new values go on the corrections list.
 
+**At the same age.** Each generation's own share of net worth (and of real estate) when its average member was 35,
+meaning the year its middle birth year turned 35: Boomers 1990, Gen X 2007.5, Millennials 2023.5. The figure is the
+mean of the quarterly shares within two years either side, and the range is the lowest and highest quarter. This
+differs from the window method on the other topic pages because the DFA starts in 1989 Q3, when Boomers averaged
+about 34; a window average would compare Boomers at older ages than Millennials. Two biases to keep in mind: the
+Boomer figure uses only the 10 quarters from 1989 Q3, and head-of-household assignment lowers every young
+generation's share (young adults living with parents count in their parents' household), more so recently. Stocks are
+left out of this comparison: the DFA's estimates of young households' stock holdings are too noisy in the early
+years (Boomer holdings roughly quadruple within a year around 1990).
+
 ## Congress
 
 **Source:** [unitedstates/congress-legislators](https://github.com/unitedstates/congress-legislators), a
@@ -108,10 +122,50 @@ public-domain dataset of every member of Congress since 1789 with birthdates and
   dataset doesn't always shorten a term when a member died or resigned, so a seat can briefly show two holders. For
   those seats we keep the member whose term started later.
 
+## Then and now: generations at the same age
+
+The housing, work, college and taxes pages compare what each generation faced **at the same age**, because a
+comparison between "the 1970s" and "today" silently compares people at different points in life.
+
+- **Windows.** For an age A, a generation's window is the calendar years in which its birth years turned A. Boomers
+  (born 1946–1964) turned 30 in 1976–1994; Millennials (1981–1996) turn 30 in 2011–2026. The Silent Generation is
+  taken as born 1928–1945 (Pew) so its window is closed.
+- **The value** for a generation is the average of the indicator over its window; **the range** printed with it is
+  the lowest and highest single year in the window. Averaging over the window keeps the comparison from depending on
+  which year one picks.
+- **Coverage.** A generation needs at least three observed years in its window. Windows that extend past the latest
+  data say "so far: N of M years"; windows that start before a series begins say "data for N of M years".
+- **Dollars** are converted to the latest full year's prices with the CPI-U (all items, not seasonally adjusted,
+  annual average).
+- **What these are.** Every indicator is computed directly from published series, so they are labeled measured.
+  Several involve stated assumptions (below); those assumptions are on the page next to the chart.
+
+| Indicator | Built from | Assumptions and limits |
+|---|---|---|
+| Home price ÷ family income | Median sales price of new houses sold (Census/HUD, MSPUS) over median family income (Census CPS, MEFAINUSA646N) | New houses cost more than existing ones; family income because household income starts only in 1984 |
+| Down payment in months of income | 20% of the median new-house price over monthly median family income | Pre-tax income with nothing else spent |
+| Mortgage payment, % of income | Principal and interest on a 30-year fixed loan at that year's average Freddie Mac PMMS rate, 20% down, median new house | Excludes property tax and insurance; many first-time buyers put down less |
+| Mortgage rate, fed funds rate | Freddie Mac PMMS; Federal Reserve | Annual averages |
+| Productivity and pay | BLS output per hour and real hourly compensation, nonfarm business (both 1948 = 100); BLS average hourly earnings of production and nonsupervisory workers, CPI-U deflated, spliced to the compensation index at 1964 | The two pay lines bracket the measurement debate: compensation includes benefits and all earners and uses BLS's output deflator; the wage line excludes benefits and supervisors and uses CPI-U |
+| Labor's share | BEA compensation of employees, % of gross domestic income | Proprietors' income, part of which is labor income, is excluded |
+| Profits' share | BEA corporate profits after tax (without IVA and CCAdj) over GDP | Book profits |
+| Real minimum wage | Federal minimum (Department of Labor), CPI-U deflated | Many states and cities set higher minimums |
+| Tuition in minimum-wage hours; real tuition | NCES Digest table 330.10, in-state tuition and required fees at public 4-year institutions (newest Digest edition), over the federal minimum wage | Sticker price before grants; the academic year is keyed to the calendar year it starts in |
+| Corporate tax take | BEA federal taxes on corporate income over corporate profits before tax | Book profits, all corporations; excludes state taxes |
+| Top bracket rate | IRS Statistics of Income historical table 23 | The table ends in 2018; later years carry the 37% statutory rate (P.L. 115-97, made permanent by P.L. 119-21), marked in the source record |
+
+FRED (Federal Reserve Bank of St. Louis) is used as the delivery channel for the BEA, BLS, Census, Freddie Mac, Labor
+Department and Federal Reserve series; the original publisher is named on every chart.
+
+**Published estimates.** For questions no official statistic answers, such as the tax rate the richest households
+actually pay, we compute nothing ourselves. The taxes page lists the main published estimates, each with exactly what
+it measures and, where one exists, the published critique beside it. The list lives in `registry/literature.yaml`
+and every figure in it is logged to the ledger like any other number.
+
 ## Corrections policy
 
 If a source revises a number we've already shown, or a Census reconciliation moves the headcount by more than 0.5%,
-the old and new values are listed in the Corrections section on the front page with the date and reason. Nothing is
+the old and new values are listed on the Sources page under Corrections with the date and reason. Nothing is
 quietly replaced; the full history is in the ledger.
 
 ## What this page is not
@@ -129,3 +183,9 @@ comes in, and the page will show when they do.
 - U.S. Census Bureau, *The Baby Boom Cohort in the United States: 2012 to 2060* (P25-1141), for the 1999 peak.
 - Federal Reserve Board, Distributional Financial Accounts.
 - unitedstates/congress-legislators.
+- Federal Reserve Bank of St. Louis, FRED, for series from BEA (national accounts), BLS (productivity, compensation,
+  earnings, CPI), Census and HUD (new-house prices, family income), Freddie Mac (mortgage rates), the Department of
+  Labor (minimum wage) and the Federal Reserve (federal funds rate).
+- National Center for Education Statistics, Digest of Education Statistics, table 330.10.
+- Internal Revenue Service, Statistics of Income, historical table 23.
+- The published studies listed on the taxes page.

@@ -1,0 +1,36 @@
+# Development aid: on pushes to work branches, run the tests, print what
+# candidate data sources return (python -m bm.probe), and dry-run the whole
+# pipeline on a copy of data/. Stores and publishes nothing; read the job log.
+name: probe
+
+on:
+  push:
+    branches: ["claude/**"]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    env:
+      # --history: history indicators on live data. Or FRED ids / spreadsheet URLs to dump in full.
+      # Empty: the whole candidate list in bm/probe.py.
+      PROBE_ARGS: --history
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python -m pytest -q
+      - run: python -m bm.probe $PROBE_ARGS
+      - name: Full pipeline dry run (copy of data/, nothing committed or deployed)
+        run: |
+          tmp=$(mktemp -d)
+          cp -r data "$tmp/d"
+          BM_DATA_DIR="$tmp/d" BM_SITE_DIR="$tmp/s" python -m bm.run
+          ls "$tmp/s"
+          python -c "import json,sys; s=json.load(open('$tmp/d/run_status.json')); [print('::error::'+f['section']+': '+f['error']) for f in s['failures']]; sys.exit(1 if s['failures'] else 0)"

@@ -59,6 +59,19 @@ def trend_crossing(points: list[tuple[float, float]], threshold: float, directio
     }
 
 
+def range_label(result: dict) -> str:
+    """The printed range for a projected landmark. When some trend windows never
+    reach the threshold, the range has no upper end and must say so; printing
+    the latest finite crossing as the top of the range would overstate how
+    settled the date is."""
+    lo, hi = result["low"][:4], result["high"][:4]
+    missing = result.get("windows_without_crossing") or []
+    if missing:
+        n = len(result.get("fits") or []) or len(missing)
+        return f"{lo} or later; {len(missing)} of {n} trends never get there"
+    return f"{lo}–{hi}" if lo != hi else lo
+
+
 def band_lines(result: dict, x_from: float, x_to: float, steps: int = 40) -> dict:
     """Lower/upper envelope and central line of the fitted trends, for charts."""
     fits = result.get("fits") or []

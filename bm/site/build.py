@@ -9,8 +9,11 @@ from pathlib import Path
 
 import markdown
 
-from .. import config, stats
+from .. import config, landmarks, stats
 from ..metrics import headcount as hc
+import yaml
+
+from . import topics
 from .svg import esc, line_chart, stacked_bar
 
 REPO_URL = "https://github.com/MalcolmWest2003/boomermeter"
@@ -56,8 +59,8 @@ def landmark_list(state: dict) -> list[dict]:
         "lm_congress_under_third": (state.get("congress", {}).get("data") or {}).get("landmark_under_third"),
         "lm_cohort_half_gone": (hcs or {}).get("landmark_half_gone"),
     }
-    anchors = {"lm_wealth_under_half": "wealth", "lm_congress_under_third": "congress",
-               "lm_cohort_half_gone": "cohort"}
+    anchors = {"lm_wealth_under_half": "wealth.html#wealth", "lm_congress_under_third": "power.html#congress",
+               "lm_cohort_half_gone": "population.html#cohort"}
     for lid, lm in sources.items():
         if not lm:
             continue
@@ -65,7 +68,8 @@ def landmark_list(state: dict) -> list[dict]:
         item = {"id": lid, "name": cfg["display_name"], "anchor": anchors[lid],
                 "status": lm["status"], "caveat": cfg["caveat_line"], "method": cfg["method"]}
         if lm["status"] == "projected":
-            item.update(central=lm["central"], low=lm["low"], high=lm["high"])
+            item.update(central=lm["central"], low=lm["low"], high=lm["high"],
+                        range_label=lm.get("range_label") or landmarks.range_label(lm))
             if hcs:
                 item["pos"] = 50.0 if lid == "lm_cohort_half_gone" else hc.share_gone_at(hcs, d(lm["central"]))
         elif lm["status"] == "passed":
@@ -99,10 +103,10 @@ def meter(state: dict, lms: list[dict]) -> str:
             title = f'{esc(lm["name"])}: passed around {(lm.get("central") or "")[:4]}'
             year = f'✓ {(lm.get("central") or "")[:4]}'
         else:
-            title = f'{esc(lm["name"])}: projected {lm["central"][:4]} (range {lm["low"][:4]}–{lm["high"][:4]})'
+            title = f'{esc(lm["name"])}: projected {lm["central"][:4]} (range {esc(lm["range_label"])})'
             year = lm["central"][:4]
         marks.append(
-            f'<a class="landmark row{row} {lm["status"]}" href="#{lm["anchor"]}" style="left:{lm["pos"]:.2f}%" title="{title}">'
+            f'<a class="landmark row{row} {lm["status"]}" href="{lm["anchor"]}" style="left:{lm["pos"]:.2f}%" title="{title}">'
             f'<span class="lm-line"></span><span class="lm-label">{year}<span class="lm-nm"><br>{esc(short_name(lm["id"]))}</span></span></a>')
     return f"""
 <section class="meter" aria-label="Share of the peak Boomer population gone">
@@ -141,14 +145,14 @@ def landmark_cards(lms: list[dict]) -> str:
     cards = []
     for lm in lms:
         if lm["status"] == "projected":
-            rng = (f'range {lm["low"][:4]}–{lm["high"][:4]}' if lm["low"][:4] != lm["high"][:4]
+            rng = (f'range {esc(lm["range_label"])}' if lm["low"][:4] != lm["high"][:4]
                    else f'all scenarios land in {lm["low"][:4]}')
             when = f'<div class="lm-year">{lm["central"][:4]}</div><div class="lm-range">{rng}</div>'
         elif lm["status"] == "passed":
             when = f'<div class="lm-year">Passed</div><div class="lm-range">{(lm.get("central") or "")[:4]}</div>'
         else:
             when = '<div class="lm-year">—</div><div class="lm-range">recent trend doesn’t get there</div>'
-        cards.append(f'<a class="lm-card" href="#{lm["anchor"]}"><div class="lm-name">{esc(lm["name"])}</div>{when}'
+        cards.append(f'<a class="lm-card" href="{lm["anchor"]}"><div class="lm-name">{esc(lm["name"])}</div>{when}'
                      f'<div class="lm-cav">{esc(lm["caveat"])}</div></a>')
     return f'<section class="lm-cards"><h2 class="kicker">Landmarks ahead</h2><div class="cards">{"".join(cards)}</div></section>'
 
@@ -250,7 +254,13 @@ def wealth_section(state: dict) -> str:
                              x_fmt=lambda x: f"Q{(stats.from_year_frac(x).month - 1)//3 + 1} {stats.from_year_frac(x).year}",
                              hrefs=[{"at": 50, "label": ""}], aria=title) + "</figure>")
 
-    if lm.get("status") == "projected":
+    if lm.get("status") == "projected" and lm.get("windows_without_crossing"):
+        n_no, n_all = len(lm["windows_without_crossing"]), len(lm.get("fits") or [])
+        lm_text = (f'<p>The trend over the last five years puts the share below half in <strong>{lm["central"][:4]}</strong>, '
+                   f'but this landmark is not settled. Fitted over the last 3 to 7 years, the earliest crossing is {lm["low"][:4]}, '
+                   f'and {n_no} of {n_all} fits never cross at all, because the share has been flat or rising recently '
+                   f'while stock prices rose. That spread is the shaded band.</p>')
+    elif lm.get("status") == "projected":
         lm_text = (f'<p>If the share keeps falling at its recent pace, it drops below half in <strong>{lm["central"][:4]}</strong>. '
                    f'Fitting the trend over the last 3 to 7 years instead gives anywhere from {lm["low"][:4]} to {lm["high"][:4]}; '
                    f'that spread is the shaded band. Stock and housing markets can move this by years in either direction.</p>')
@@ -269,6 +279,7 @@ def wealth_section(state: dict) -> str:
   projections. Source: Federal Reserve Board, Distributional Financial Accounts, generation levels; share = Boomer ÷ all
   generations.</p>
   <div class="lm-detail"><h3>Landmark: under half of household wealth</h3>{lm_text}</div>
+  {same_age_block(w)}
   <div class="smalls">
     {small('equities', 'Stocks & mutual funds', 'c-eq')}
     {small('realestate', 'Real estate (market value)', 'c-re')}
@@ -278,6 +289,48 @@ def wealth_section(state: dict) -> str:
   The Fed revises back data every quarter; changes to numbers we’ve shown are logged as corrections.</p>
   {stale_note(sec)}
 </section>"""
+
+
+def same_age_block(w: dict) -> str:
+    sa = w.get("same_age")
+    if not sa:
+        return ""
+    age = sa["age"]
+
+    def cards(col):
+        out = []
+        ref = sa["by_column"].get(col, {}).get("Boomer", {}).get("mean")
+        for gen, v in sa["by_column"].get(col, {}).items():
+            delta = ""
+            if gen != "Boomer" and ref:
+                delta = f'<div class="cmp-d">{v["mean"] - ref:+.1f} pts vs Boomers</div>'
+            part = "" if v["complete"] else f'<span class="sofar">{v["quarters"]} quarters of data</span>'
+            out.append(f'<div class="cmp-card" style="--c:var({topics.GEN_VARS[gen]})"><div class="cmp-g">{esc(gen)}</div>'
+                       f'<div class="cmp-v">{v["mean"]:.1f}%</div>'
+                       f'<div class="cmp-w">{v["from"][:4]}–{v["to"][:4]} {part}</div>'
+                       f'<div class="cmp-r">range {v["low"]:.1f}% – {v["high"]:.1f}%</div>{delta}</div>')
+        return f'<div class="cmp-row">{"".join(out)}</div>'
+
+    nw = sa["by_column"].get("networth", {})
+    lead = ""
+    if "Boomer" in nw and "Millennial" in nw:
+        lead = (f'<p class="lede">When the average Boomer was {age}, Boomer households held '
+                f'<strong>{nw["Boomer"]["mean"]:.1f}%</strong> of US household net worth. At the same age, Millennial '
+                f'households hold <strong>{nw["Millennial"]["mean"]:.1f}%</strong>.</p>')
+    return f"""
+  <h3 id="same-age">At the same age</h3>
+  {lead}
+  <p class="chart-title">Share of US household net worth, when each generation’s average member was {age}</p>
+  {cards("networth")}
+  <p class="chart-title" style="margin-top:18px">Share of household real estate (market value), same point in life</p>
+  {cards("realestate")}
+  <p class="caption">“Average member was {age}” means the year the generation’s middle birth year turned {age} (Boomers
+  1990, Gen X 2007, Millennials 2023); each figure averages the quarters within {sa["half_width"]} years of it, and its
+  range is the lowest and highest quarter. The Fed’s series starts in late 1989, so the Boomer figure covers only the
+  later part of its window. Households count by the generation of their head: young adults living with parents count
+  in their parents’ household, which lowers the share of any young generation, and more young adults live with their
+  parents now than in the 1980s. Stocks are left out of this comparison because the Fed’s estimates of young
+  households’ stock holdings are too noisy in the early years.</p>"""
 
 
 def congress_section(state: dict) -> str:
@@ -331,7 +384,7 @@ def congress_section(state: dict) -> str:
         aria="Boomer share of Congress since its peak, with projection")
     lm_text = (f'Boomers hold <strong>{c["boomer_share"]:.1f}%</strong> of seats ({c["boomer_count"]} of {c["seated_with_birthday"]}). '
                f'At the pace of the last few Congresses, that falls below a third in <strong>{lm["central"][:4]}</strong> '
-               f'(range {lm["low"][:4]}–{lm["high"][:4]}).' if lm.get("status") == "projected" else
+               f'(range {esc(landmarks.range_label(lm))}).' if lm.get("status") == "projected" else
                f'Boomers hold <strong>{c["boomer_share"]:.1f}%</strong> of seats.')
     return f"""
 <section id="congress" class="block">
@@ -389,9 +442,10 @@ def corrections_section(state: dict) -> str:
 def sources_section(state: dict) -> str:
     rows = []
     seen = set()
-    for key in ("headcount", "wealth", "congress"):
+    for key in ("headcount", "wealth", "congress", "history"):
         data = (state.get(key) or {}).get("data") or {}
-        for s in data.get("sources", []) + data.get("projection_sources", []):
+        hist_srcs = [s for i in data.get("indicators", []) for s in i.get("sources", [])]
+        for s in data.get("sources", []) + data.get("projection_sources", []) + hist_srcs:
             if "sha256" not in s or s["sha256"] in seen:
                 continue
             seen.add(s["sha256"])
@@ -406,11 +460,18 @@ def sources_section(state: dict) -> str:
 
 # --------------------------------------------------------------------------- page
 
-def page(title: str, body: str, description: str) -> str:
+NAV = [("index.html", "Meter"), ("population.html", "Population"), ("wealth.html", "Wealth"),
+       ("power.html", "Power"), ("housing.html", "Housing"), ("work.html", "Work"), ("college.html", "College"),
+       ("taxes.html", "Taxes"), ("sources.html", "Sources"), ("methods.html", "Methods")]
+
+
+def page(title: str, body: str, description: str, current: str = "index.html") -> str:
     css = (Path(__file__).parent / "style.css").read_text()
     js = (Path(__file__).parent / "tooltip.js").read_text()
+    cur = ' aria-current="page"'
+    nav = "".join(f'<a href="{href}"{cur if href == current else ""}>{label}</a>' for href, label in NAV)
     return f"""<!doctype html>
-<html lang="en"><head><meta charset="utf-8">
+<html lang="en" data-age="30"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{esc(title)}</title>
 <meta name="description" content="{esc(description)}">
@@ -419,14 +480,43 @@ def page(title: str, body: str, description: str) -> str:
 <style>{css}</style></head>
 <body>
 <header class="top"><a class="brand" href="index.html">BOOMERMETER</a>
-<nav><a href="index.html#cohort">Cohort</a><a href="index.html#wealth">Wealth</a><a href="index.html#congress">Congress</a><a href="methods.html">Methods</a></nav></header>
+<nav>{nav}</nav></header>
 <main>{body}</main>
 <footer><p>US data only. Every number is sourced; every estimate is labeled. <a href="methods.html">Methods</a> ·
-<a href="index.html#corrections">Corrections</a> · <a href="data/latest.json">Data (JSON)</a> ·
+<a href="sources.html#corrections">Corrections</a> · <a href="data/latest.json">Data (JSON)</a> ·
 <a href="data/ledger.jsonl">Ledger</a> · <a href="{REPO_URL}">Code</a></p></footer>
 <div id="tt" class="tt" hidden></div>
 <script>{js}</script>
 </body></html>"""
+
+
+EXPLORE = [
+    ("population.html", "Population", "How many Boomers are left, and when half the peak will be gone."),
+    ("wealth.html", "Wealth", "Who owns America’s household wealth, generation by generation."),
+    ("power.html", "Power", "The oldest Congresses in history, and who holds the seats."),
+    ("housing.html", "Housing", None),
+    ("work.html", "Work and pay", None),
+    ("college.html", "College", None),
+    ("taxes.html", "Taxes at the top", None),
+]
+
+
+def explore_grid(state: dict) -> str:
+    hist = (state.get("history") or {}).get("data") or {}
+    cards = []
+    for href, title, text in EXPLORE:
+        key = href.split(".")[0]
+        line = text or topics.headline(key, hist) or topics.TOPICS[key]["lede"]
+        cards.append(f'<a class="ex-card" href="{href}"><div class="ex-t">{esc(title)} →</div>'
+                     f'<div class="ex-l">{line}</div></a>')
+    return (f'<section class="explore"><h2 class="kicker">Then and now</h2>'
+            f'<p class="lede">What each generation faced at the same age: homes, pay, college, taxes, and who holds '
+            f'the wealth and the seats. Every comparison is sourced and every range printed.</p>'
+            f'<div class="ex-grid">{"".join(cards)}</div></section>')
+
+
+def literature(state: dict) -> dict:
+    return (state.get("literature") or {}).get("data") or {}
 
 
 def build(state: dict, out: Path = config.SITE_OUT) -> Path:
@@ -442,24 +532,44 @@ def build(state: dict, out: Path = config.SITE_OUT) -> Path:
 <section class="hero">
   <h1>The handoff, counted.</h1>
   <p class="hero-lede">The Baby Boom generation has held the center of American wealth and political power longer than
-  any generation before it. This page tracks the transfer as it happens — with sources you can check and every
-  estimate labeled as one.</p>
+  any generation before it. This site tracks the transfer as it happens, and what each generation faced on the way,
+  with sources you can check and every estimate labeled as one.</p>
   <p class="updated">Updated {updated}</p>
 </section>
 {meter(state, lms)}
 {landmark_cards(lms)}
-{cohort_section(state)}
-{wealth_section(state)}
-{congress_section(state)}
-{coming_section()}
-{corrections_section(state)}
-{sources_section(state)}"""
-    (out / "index.html").write_text(page("Boomermeter — the handoff, counted", body,
-                                         "Tracking the transfer of US wealth and political power from the Baby Boom generation."))
+{explore_grid(state)}
+{coming_section()}"""
+    desc = "Tracking the transfer of US wealth and political power from the Baby Boom generation."
+    pages = {"index.html": ("Boomermeter — the handoff, counted", body)}
+
+    def sub(href, title, inner):
+        pages[href] = (f"{title} — Boomermeter", banner + f'<p class="kicker crumb"><a href="index.html">Boomermeter</a> / {esc(title)}</p>' + inner)
+
+    sub("population.html", "Population", cohort_section(state))
+    sub("wealth.html", "Wealth", wealth_section(state))
+    sub("power.html", "Power", congress_section(state))
+    hist = (state.get("history") or {}).get("data")
+    lit = literature(state)
+    for key in topics.ORDER:
+        title = topics.TOPICS[key]["title"]
+        if not hist:
+            inner = (f'<section class="block"><h2>{esc(title)}</h2><p class="pending">Waiting on the first successful '
+                     f'run of the historical data.</p></section>')
+        else:
+            extra = ""
+            if key == "taxes" and lit:
+                extra = topics.literature_table(lit.get("top_tax_estimates", []) + lit.get("corporate_estimates", []))
+            inner = topics.topic_page(key, hist, extra) + stale_note(state.get("history", {}))
+        pages[f"{key}.html"] = (f"{title} — Boomermeter", banner + inner)
+    sub("sources.html", "Sources", sources_section(state) + corrections_section(state))
+    for href, (title, html_body) in pages.items():
+        (out / href).write_text(page(title, html_body, desc, current=href))
     methods_md = (config.ROOT / "METHODS.md").read_text()
     methods_html = markdown.markdown(methods_md, extensions=["tables", "toc"])
     (out / "methods.html").write_text(page("Methods — Boomermeter", f'<article class="methods">{methods_html}</article>',
-                                           "How every number on Boomermeter is sourced, estimated and labeled."))
+                                           "How every number on Boomermeter is sourced, estimated and labeled.",
+                                           current="methods.html"))
     public = {k: v for k, v in state.items() if k != "registry"}
     (out / "data" / "latest.json").write_text(json.dumps(public, indent=1, default=str))
     if config.LEDGER.exists():

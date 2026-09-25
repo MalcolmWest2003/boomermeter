@@ -121,6 +121,38 @@ metrics:
     chart_type: line
     caveat_line: "Fed DFA. Households assigned by the generation of the household head."
 
+  - id: wealth_same_age_networth
+    display_name: "Each generation's share of US household net worth when its average member was 35"
+    status_kind: measured
+    source:
+      name: Federal Reserve Board, Distributional Financial Accounts (DFA)
+      api: federalreserve.gov flat file
+      endpoint: dfa.zip → dfa-generation-levels.csv
+      series_id: Net worth by generation; share of the sum of generations
+    update_cadence: quarterly
+    adjustment_pipeline: [share_from_levels, mean_over_quarters_within_2_years_of_average_age_35]
+    known_confounds:
+      - "Households are assigned to the generation of the household head; young adults living with their parents count in their parents' household, which lowers young generations' share, and more so for Millennials."
+      - "DFA starts in 1989 Q3, when Boomers averaged about 34, so the Boomer window is partly observed."
+    chart_type: cards
+    caveat_line: "Fed DFA. Share of household net worth when the generation's middle birth year turned 35 (±2 years)."
+
+  - id: wealth_same_age_realestate
+    display_name: "Each generation's share of household real estate when its average member was 35"
+    status_kind: measured
+    source:
+      name: Federal Reserve Board, Distributional Financial Accounts (DFA)
+      api: federalreserve.gov flat file
+      endpoint: dfa.zip → dfa-generation-levels.csv
+      series_id: Real estate by generation (market value); share of the sum of generations
+    update_cadence: quarterly
+    adjustment_pipeline: [share_from_levels, mean_over_quarters_within_2_years_of_average_age_35]
+    known_confounds:
+      - "Gross market value, before mortgages."
+      - "Households are assigned to the generation of the household head."
+    chart_type: cards
+    caveat_line: "Fed DFA. Share of household real estate when the generation's middle birth year turned 35 (±2 years)."
+
   - id: wealth_share_equities
     display_name: Boomer-headed households' share of corporate equities & mutual funds
     status_kind: measured
@@ -152,6 +184,250 @@ metrics:
       - Generation is that of the household's reference person.
     chart_type: line
     caveat_line: "Fed DFA. Market value of real estate, before mortgages."
+
+  # ---- History: what each generation faced at the same age (bm/metrics/history.py)
+  - id: hist_price_to_income
+    display_name: "Median new-home price ÷ median family income"
+    status_kind: measured
+    source:
+      name: "U.S. Census Bureau & HUD (MSPUS); U.S. Census Bureau CPS (MEFAINUSA646N), via FRED"
+      api: fred.stlouisfed.org
+      endpoint: "graph/fredgraph.csv?id=<series>"
+      series_id: "MSPUS, MEFAINUSA646N"
+    update_cadence: "annual (price quarterly, income annual)"
+    adjustment_pipeline: [annual_mean_of_quarters, ratio]
+    known_confounds:
+      - "New-house prices exceed existing-house prices; the level is high but the change over time is comparable."
+      - "Family income, not household income: the household series starts only in 1984."
+    chart_type: line_with_generation_windows
+    caveat_line: "Census price and income data. New houses only."
+
+  - id: hist_down_payment_months
+    display_name: "A 20% down payment on the median new home, in months of median family income"
+    status_kind: measured
+    source:
+      name: "U.S. Census Bureau & HUD (MSPUS); U.S. Census Bureau CPS (MEFAINUSA646N), via FRED"
+      api: fred.stlouisfed.org
+      endpoint: "graph/fredgraph.csv?id=<series>"
+      series_id: "MSPUS, MEFAINUSA646N"
+    update_cadence: "annual"
+    adjustment_pipeline: [annual_mean_of_quarters, ratio, times_2.4]
+    known_confounds:
+      - "Pre-tax income with nothing else spent; real saving time is several times longer."
+      - "New-house prices exceed existing-house prices."
+    chart_type: line_with_generation_windows
+    caveat_line: "Computed: 20% of the median new-house price over monthly family income."
+
+  - id: hist_mortgage_payment_share
+    display_name: "Mortgage payment on the median new home, % of median family income"
+    status_kind: measured
+    source:
+      name: "Freddie Mac PMMS (MORTGAGE30US); Census/HUD (MSPUS); Census CPS (MEFAINUSA646N), via FRED"
+      api: fred.stlouisfed.org
+      endpoint: "graph/fredgraph.csv?id=<series>"
+      series_id: "MORTGAGE30US, MSPUS, MEFAINUSA646N"
+    update_cadence: "annual"
+    adjustment_pipeline: [annual_mean, fixed_rate_payment_20pct_down_30yr, ratio]
+    known_confounds:
+      - "Principal and interest only; property taxes and insurance excluded."
+      - "Assumes 20% down; first-time buyers often put down less, which raises the share."
+    chart_type: line_with_generation_windows
+    caveat_line: "Computed: 30-year fixed, 20% down, at that year's average rate."
+
+  - id: hist_mortgage_rate
+    display_name: "30-year fixed mortgage rate, annual average"
+    status_kind: measured
+    source:
+      name: "Freddie Mac Primary Mortgage Market Survey, via FRED"
+      api: fred.stlouisfed.org
+      endpoint: "graph/fredgraph.csv?id=<series>"
+      series_id: "MORTGAGE30US"
+    update_cadence: "weekly source, annual mean"
+    adjustment_pipeline: [annual_mean]
+    known_confounds:
+      - "Survey rate for prime borrowers; many buyers paid more."
+    chart_type: line_with_generation_windows
+    caveat_line: "Freddie Mac survey rate."
+
+  - id: hist_fed_funds
+    display_name: "Effective federal funds rate, annual average"
+    status_kind: measured
+    source:
+      name: "Board of Governors of the Federal Reserve System, via FRED"
+      api: fred.stlouisfed.org
+      endpoint: "graph/fredgraph.csv?id=<series>"
+      series_id: "FEDFUNDS"
+    update_cadence: "monthly source, annual mean"
+    adjustment_pipeline: [annual_mean]
+    known_confounds: []
+    chart_type: line_with_generation_windows
+    caveat_line: "Federal Reserve."
+
+  - id: hist_productivity_index
+    display_name: "Output per hour, nonfarm business (1948 = 100)"
+    status_kind: measured
+    source:
+      name: "U.S. Bureau of Labor Statistics, via FRED"
+      api: fred.stlouisfed.org
+      endpoint: "graph/fredgraph.csv?id=<series>"
+      series_id: "OPHNFB"
+    update_cadence: "quarterly source, annual mean"
+    adjustment_pipeline: [annual_mean, rebase_1948]
+    known_confounds:
+      - "Output deflator differs from consumer prices; see the pay-gap note."
+    chart_type: line_with_generation_windows
+    caveat_line: "BLS productivity."
+
+  - id: hist_real_comp_index
+    display_name: "Real hourly compensation, nonfarm business (1948 = 100)"
+    status_kind: measured
+    source:
+      name: "U.S. Bureau of Labor Statistics, via FRED"
+      api: fred.stlouisfed.org
+      endpoint: "graph/fredgraph.csv?id=<series>"
+      series_id: "COMPRNFB"
+    update_cadence: "quarterly source, annual mean"
+    adjustment_pipeline: [annual_mean, rebase_1948]
+    known_confounds:
+      - "Includes benefits and all earners including executives; smallest measured gap."
+    chart_type: line_with_generation_windows
+    caveat_line: "BLS, includes benefits and all earners."
+
+  - id: hist_real_wage_index
+    display_name: "Real average hourly earnings, production and nonsupervisory workers (spliced to 1948 = 100 scale at 1964)"
+    status_kind: measured
+    source:
+      name: "U.S. Bureau of Labor Statistics (AHETPI); CPI-U (CPIAUCNS), via FRED"
+      api: fred.stlouisfed.org
+      endpoint: "graph/fredgraph.csv?id=<series>"
+      series_id: "AHETPI, CPIAUCNS"
+    update_cadence: "monthly source, annual mean"
+    adjustment_pipeline: [annual_mean, deflate_cpi_u, splice_to_comp_index_1964]
+    known_confounds:
+      - "Wages only, no benefits; CPI-U deflator; largest measured gap."
+    chart_type: line_with_generation_windows
+    caveat_line: "BLS wages of non-supervisory workers, CPI-deflated."
+
+  - id: hist_labor_share
+    display_name: "Compensation of employees, % of gross domestic income"
+    status_kind: measured
+    source:
+      name: "U.S. Bureau of Economic Analysis, via FRED"
+      api: fred.stlouisfed.org
+      endpoint: "graph/fredgraph.csv?id=<series>"
+      series_id: "A4002E1A156NBEA"
+    update_cadence: "annual"
+    adjustment_pipeline: [as_published]
+    known_confounds:
+      - "Proprietors' income is partly labor income and is not included."
+    chart_type: line_with_generation_windows
+    caveat_line: "BEA national accounts."
+
+  - id: hist_profit_share
+    display_name: "Corporate profits after tax, % of GDP"
+    status_kind: measured
+    source:
+      name: "U.S. Bureau of Economic Analysis, via FRED"
+      api: fred.stlouisfed.org
+      endpoint: "graph/fredgraph.csv?id=<series>"
+      series_id: "CP, GDP"
+    update_cadence: "quarterly source, annual mean"
+    adjustment_pipeline: [annual_mean, ratio]
+    known_confounds:
+      - "Book profits without inventory and capital consumption adjustments."
+    chart_type: line_with_generation_windows
+    caveat_line: "BEA national accounts."
+
+  - id: hist_real_min_wage
+    display_name: "Federal minimum wage, latest-year dollars"
+    status_kind: measured
+    source:
+      name: "U.S. Department of Labor (FEDMINNFRWG); CPI-U (CPIAUCNS), via FRED"
+      api: fred.stlouisfed.org
+      endpoint: "graph/fredgraph.csv?id=<series>"
+      series_id: "FEDMINNFRWG, CPIAUCNS"
+    update_cadence: "monthly source, annual mean"
+    adjustment_pipeline: [annual_mean, deflate_cpi_u]
+    known_confounds:
+      - "Many states and cities set higher minimums."
+    chart_type: line_with_generation_windows
+    caveat_line: "Federal floor, CPI-deflated."
+
+  - id: hist_tuition_hours_min_wage
+    display_name: "Hours at the federal minimum wage to pay one year of public 4-year in-state tuition and fees"
+    status_kind: measured
+    source:
+      name: "NCES Digest of Education Statistics table 330.10; U.S. Department of Labor (FEDMINNFRWG)"
+      api: nces.ed.gov
+      endpoint: "digest/d{yy}/tables/xls/tabn330.10.xlsx; fredgraph.csv"
+      series_id: "tabn330.10 public 4-year tuition and required fees; FEDMINNFRWG"
+    update_cadence: "annual"
+    adjustment_pipeline: [ratio]
+    known_confounds:
+      - "Sticker price before grants and aid."
+      - "Federal minimum; many states set higher minimums."
+    chart_type: line_with_generation_windows
+    caveat_line: "Sticker tuition over the federal minimum wage."
+
+  - id: hist_tuition_real
+    display_name: "Public 4-year in-state tuition and fees, latest-year dollars"
+    status_kind: measured
+    source:
+      name: "NCES Digest of Education Statistics table 330.10; CPI-U (CPIAUCNS)"
+      api: nces.ed.gov
+      endpoint: "digest/d{yy}/tables/xls/tabn330.10.xlsx; fredgraph.csv"
+      series_id: "tabn330.10 public 4-year tuition and required fees"
+    update_cadence: "annual"
+    adjustment_pipeline: [deflate_cpi_u]
+    known_confounds:
+      - "Sticker price before grants and aid."
+    chart_type: line_with_generation_windows
+    caveat_line: "NCES sticker price, CPI-deflated."
+
+  - id: hist_corp_effective_tax
+    display_name: "Federal taxes on corporate income, % of corporate profits before tax"
+    status_kind: measured
+    source:
+      name: "U.S. Bureau of Economic Analysis, via FRED"
+      api: fred.stlouisfed.org
+      endpoint: "graph/fredgraph.csv?id=<series>"
+      series_id: "B075RC1Q027SBEA, A053RC1Q027SBEA"
+    update_cadence: "quarterly source, annual mean"
+    adjustment_pipeline: [annual_mean, ratio]
+    known_confounds:
+      - "Book profits, not taxable income; aggregate across all corporations."
+      - "Excludes state corporate taxes."
+    chart_type: line_with_generation_windows
+    caveat_line: "BEA aggregate effective rate."
+
+  - id: hist_top_income_tax_rate
+    display_name: "Top federal income tax bracket rate"
+    status_kind: measured
+    source:
+      name: "IRS Statistics of Income, historical table 23; statute for years after the table ends"
+      api: irs.gov
+      endpoint: "pub/irs-soi/histab23.xls"
+      series_id: "histab23.xls highest bracket rate; 37% from P.L. 115-97 / P.L. 119-21 after 2018"
+    update_cadence: "annual"
+    adjustment_pipeline: [as_published, statutory_carry_forward_after_table]
+    known_confounds:
+      - "Statutory rate on the top bracket; effective rates at the top are lower."
+    chart_type: line_with_generation_windows
+    caveat_line: "IRS SOI table 23."
+  - id: lit_published_tax_estimates
+    display_name: "Published estimates of tax rates paid by the richest households and largest corporations"
+    status_kind: measured
+    source:
+      name: "Published research, curated in registry/literature.yaml (each entry names its study)"
+      api: n/a
+      endpoint: registry/literature.yaml
+      series_id: "top_tax_estimates, corporate_estimates"
+    update_cadence: "manual, when new studies appear"
+    adjustment_pipeline: [as_published]
+    known_confounds:
+      - "The estimates measure different things (which taxes, which income concept) and are not directly comparable."
+    chart_type: table
+    caveat_line: "Other researchers' estimates, reported as published with what each measures."
 
 landmarks:
 
