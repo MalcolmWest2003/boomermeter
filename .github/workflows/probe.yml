@@ -1,0 +1,25 @@
+# Development aid: on pushes to work branches, run the tests and print what
+# candidate data sources return (python -m bm.probe). Stores and publishes
+# nothing; the output is read from the job log.
+name: probe
+
+on:
+  push:
+    branches: ["claude/**"]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt openpyxl xlrd
+      - run: python -m pytest -q
+      - run: python -m bm.probe
