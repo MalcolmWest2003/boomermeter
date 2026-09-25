@@ -162,3 +162,44 @@ def test_range_label_open_ended_when_some_windows_never_cross():
     assert landmarks.range_label(lm) == "2028 or later; 2 of 5 trends never get there"
     lm["windows_without_crossing"] = []
     assert landmarks.range_label(lm) == "2028–2053"
+
+
+# --- history
+from bm.metrics import history as hist
+from bm.sources import fred, nces
+
+
+def test_fred_parse_and_annual():
+    raw = b"observation_date,MSPUS\n2024-01-01,400\n2024-04-01,.\n2024-07-01,420\n2025-01-01,430\n"
+    obs = fred.parse(raw, "MSPUS")
+    assert len(obs) == 3
+    ann = fred.annual(obs)
+    assert ann[2024] == 410 and 2025 not in ann  # partial final year dropped
+    with pytest.raises(ValueError):
+        fred.parse(b"DATE,OTHER\n2024-01-01,1\n", "MSPUS")
+
+
+def test_nces_parser_reads_public_4yr_tuition_only():
+    t = nces.parse_public_4yr_tuition(synthetic.nces_xlsx())
+    assert t[1963] == 243 and t[1964] == 253 and len(t) == 61
+
+
+def test_at_age_windows_and_coverage():
+    series = {y: float(y) for y in range(1950, 2026)}
+    g = hist.at_age(series, 30)
+    assert g["Boomer"]["window"] == [1976, 1994] and g["Boomer"]["mean"] == 1985
+    assert g["Millennial"]["window"] == [2011, 2026] and not g["Millennial"]["complete"]
+    assert "Gen Z" not in g  # born 1997+, turns 30 from 2027
+
+
+def test_mortgage_payment_share():
+    # $100k loan at 6% for 30 years = $599.55/month; 20% down on $125k
+    assert abs(hist.mortgage_payment_share(125_000, 6.0, 71_946) - 10.0) < 0.01
+
+
+def test_history_pipeline_on_synthetic_inputs():
+    a, tuition, top, prov = synthetic.history_inputs()
+    entries, site = hist.compute(hist.build(a, tuition, top), prov, dt.date(2026, 9, 25))
+    ids = {i["id"] for i in site["indicators"]}
+    assert {"hist_price_to_income", "hist_tuition_hours_min_wage", "hist_top_income_tax_rate"} <= ids
+    assert all(e.metric_id.split("@")[0] in ids for e in entries)

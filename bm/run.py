@@ -20,9 +20,10 @@ from pathlib import Path
 from . import config, ledger, registry
 from .metrics import congress as congress_m
 from .metrics import headcount as headcount_m
+from .metrics import history as history_m
 from .metrics import wealth as wealth_m
 from .site import build as site_build
-from .sources import census, congress, fed_dfa
+from .sources import census, congress, fed_dfa, fred, irs, nces
 
 
 def _save_state(name: str, data: dict, run_date: dt.date) -> dict:
@@ -76,7 +77,8 @@ def run(demo: bool = False, congress_dir: Path | None = None) -> dict:
         try:
             entries, data = fn()
             for e in entries:
-                registry.require(reg, e.metric_id) if not e.metric_id.startswith("lm_") else None
+                # "id@generation@age" entries are per-generation values of a registered metric.
+                registry.require(reg, e.metric_id.split("@")[0]) if not e.metric_id.startswith("lm_") else None
                 ledger.append(e, today)
             if name == "headcount":
                 _check_reconciliation(data, today)
@@ -111,9 +113,32 @@ def run(demo: bool = False, congress_dir: Path | None = None) -> dict:
             parsed, prov = fed_dfa.load()
         return wealth_m.compute(parsed, prov, today, reg)
 
+    def do_history():
+        if demo:
+            from tests import synthetic
+            annual, tuition, top_rate, prov = synthetic.history_inputs()
+        else:
+            annual, prov = {}, {}
+            for sid, how in history_m.FRED_SERIES.items():
+                obs, prov[sid] = fred.fetch(sid)
+                annual[sid] = fred.annual(obs, how)
+            tuition = top_rate = None
+            for key, fetch in (("NCES-330.10", nces.fetch), ("IRS-SOI-23", irs.fetch)):
+                try:  # one missing table drops its indicators, not the whole section
+                    vals, prov[key] = fetch()
+                except Exception as e:  # noqa: BLE001
+                    failures.append({"section": f"history:{key}", "error": f"{type(e).__name__}: {e}"})
+                    continue
+                if key == "NCES-330.10":
+                    tuition = vals
+                else:
+                    top_rate = vals
+        return history_m.compute(history_m.build(annual, tuition, top_rate), prov, today)
+
     section("congress", do_congress)
     section("headcount", do_headcount)
     section("wealth", do_wealth)
+    section("history", do_history)
     state["corrections"] = ledger.corrections()
     state["failures"] = [{k: v for k, v in f.items() if k != "trace"} for f in failures]
     site_build.build(state)

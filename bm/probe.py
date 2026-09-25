@@ -104,7 +104,37 @@ def show_other(url: str, max_rows: int = 60) -> None:
         print("   ", raw[:600].decode("utf-8", "replace"))
 
 
+def show_history() -> None:
+    """Run the history indicators on live data and print a summary table."""
+    import datetime as dt
+    import os
+    import tempfile
+    os.environ.setdefault("BM_DATA_DIR", tempfile.mkdtemp())
+    from .metrics import history as h
+    from .sources import irs, nces
+    annual, prov = {}, {}
+    for sid, how in h.FRED_SERIES.items():
+        obs, prov[sid] = fred.fetch(sid)
+        annual[sid] = fred.annual(obs, how)
+    tuition, prov["NCES-330.10"] = nces.fetch()
+    top, prov["IRS-SOI-23"] = irs.fetch()
+    print("tuition", {y: tuition[y] for y in sorted(tuition)[:3] + sorted(tuition)[-3:]})
+    print("top rate", {y: top[y] for y in (1950, 1964, 1981, 1987, 1993, 2013, 2018, max(top))})
+    _, site = h.compute(h.build(annual, tuition, top), prov, dt.date.today())
+    for ind in site["indicators"]:
+        f = ind["fmt"]
+        ys = dict(zip(ind["years"], ind["values"]))
+        sample = ", ".join(f"{y}:{f.format(ys[y])}" for y in (1950, 1965, 1980, 1995, 2010) if y in ys)
+        print(f"== {ind['id']}: latest {ind['latest']['year']} {f.format(ind['latest']['value'])} | {sample}")
+        for gen, v in ind["at_age"]["30"].items():
+            print(f"     at 30 {gen:11s} {f.format(v['mean']):>10s}  range {f.format(v['low'])}-{f.format(v['high'])}"
+                  f"  {v['window']} n={v['observed']}")
+
+
 def main(argv: list[str]) -> None:
+    if argv == ["--history"]:
+        show_history()
+        return
     if argv:
         for a in argv:
             show_other(a, max_rows=10_000) if a.startswith("http") else show_fred(a)

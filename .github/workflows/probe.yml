@@ -20,7 +20,7 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - run: pip install -r requirements.txt openpyxl xlrd
+      - run: pip install -r requirements.txt
       - run: python -m pytest -q
       - run: python -m bm.probe
         if: ${{ !env.PROBE_ARGS }}
@@ -28,8 +28,4 @@ jobs:
         if: ${{ env.PROBE_ARGS }}
     env:
       # Set to probe specific sources in full instead of the whole candidate list.
-      PROBE_ARGS: >-
-        A4002E1A156NBEA A053RC1Q027SBEA
-        https://nces.ed.gov/programs/digest/d24/tables/xls/tabn330.10.xlsx
-        https://www.irs.gov/pub/irs-soi/histab23.xls
-        https://www.census.gov/housing/hvs/data/histtab19.xlsx
+      PROBE_ARGS: --history
