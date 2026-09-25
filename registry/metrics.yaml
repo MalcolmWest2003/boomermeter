@@ -1,0 +1,180 @@
+# Metric registry. Every number on the site is defined here first.
+# Required fields are checked by bm/registry.py; the pipeline refuses to run
+# if a metric computed in code has no entry here, or an entry lacks a field.
+#
+# status_kind: what kind of number this usually is
+#   measured      - read directly from a source release
+#   interpolated  - estimated between/after source releases
+#   projected     - forecast into the future
+
+metrics:
+
+  - id: boomer_headcount
+    display_name: Living Baby Boomers (US)
+    status_kind: interpolated
+    source:
+      name: U.S. Census Bureau, Population Estimates Program (PEP)
+      api: www2.census.gov flat files
+      endpoint: popest/datasets/2020-{vintage}/national/asrh/nc-est{vintage}-alldata-r-file*.csv
+      series_id: NC-EST ALLDATA resident population, monthly, single year of age (TOT_POP)
+    update_cadence: annual vintage (Census publishes monthly estimates plus short-term projections once a year)
+    adjustment_pipeline:
+      - boomer_cohort_from_single_year_ages
+      - census_monthly_or_extrapolated
+      - round_3_sig_figs
+    known_confounds:
+      - Immigration adds boomer-age people; emigration removes them. Census estimates include both; our own extrapolation after Census's last month carries forward the recent observed rate, which includes both.
+      - Single-year-of-age bins do not align with birth years; see the cohort convention on the methods page.
+    chart_type: line_with_band
+    caveat_line: "Estimate. Census monthly figures; after Census's last month, extrapolated from the recent rate of decline."
+
+  - id: boomer_share_gone
+    display_name: Share of the peak Boomer population no longer living in the US
+    status_kind: interpolated
+    source:
+      name: Derived — boomer_headcount ÷ peak living Boomer population
+      api: n/a
+      endpoint: n/a
+      series_id: peak = 78.8 million (1999), U.S. Census Bureau report P25-1141
+    update_cadence: daily recompute
+    adjustment_pipeline:
+      - one_minus_headcount_over_peak
+    known_confounds:
+      - Counts deaths and net emigration together; the meter measures presence in the US, not deaths alone.
+      - The peak is a published Census figure; our headcount method matches its convention (ages on July 1).
+    chart_type: meter
+    caveat_line: "Estimate. 100% = the Boomer population at its 1999 peak (78.8M, Census)."
+
+  - id: congress_median_age_house
+    display_name: Median age, U.S. House (voting members)
+    status_kind: measured
+    source:
+      name: unitedstates/congress-legislators
+      api: GitHub raw files
+      endpoint: legislators-current.yaml
+      series_id: bio.birthday, terms[-1].type == rep
+    update_cadence: continuous (recomputed daily)
+    adjustment_pipeline: [exclude_nonvoting_delegates, exact_age_on_run_date, median]
+    known_confounds:
+      - Vacancies are simply absent; a vacant seat does not count toward the median.
+    chart_type: stat
+    caveat_line: "Exact ages from published birthdates. Excludes non-voting delegates."
+
+  - id: congress_median_age_senate
+    display_name: Median age, U.S. Senate
+    status_kind: measured
+    source:
+      name: unitedstates/congress-legislators
+      api: GitHub raw files
+      endpoint: legislators-current.yaml
+      series_id: bio.birthday, terms[-1].type == sen
+    update_cadence: continuous (recomputed daily)
+    adjustment_pipeline: [exact_age_on_run_date, median]
+    known_confounds: []
+    chart_type: stat
+    caveat_line: "Exact ages from published birthdates."
+
+  - id: congress_boomer_share
+    display_name: Boomer share of Congress (House + Senate voting members)
+    status_kind: measured
+    source:
+      name: unitedstates/congress-legislators
+      api: GitHub raw files
+      endpoint: legislators-current.yaml
+      series_id: bio.birthday year in 1946..1964
+    update_cadence: continuous (recomputed daily)
+    adjustment_pipeline: [exclude_nonvoting_delegates, generation_by_birth_year, share_of_seated_members]
+    known_confounds: []
+    chart_type: stacked_bar
+    caveat_line: "Share of seated voting members. Generation by birth year (Pew definitions)."
+
+  - id: congress_median_age_history
+    display_name: Median age of Congress, 1789 to today
+    status_kind: measured
+    source:
+      name: unitedstates/congress-legislators
+      api: GitHub raw files
+      endpoint: legislators-historical.yaml + legislators-current.yaml
+      series_id: members holding a seat one year after the start of each Congress
+    update_cadence: continuous
+    adjustment_pipeline: [exclude_nonvoting_delegates, members_serving_on_date, drop_missing_birthdates, median]
+    known_confounds:
+      - Some early members have no recorded birthdate; they are dropped and coverage is reported.
+      - Territorial delegates are excluded using each state's admission date.
+      - The source does not always shorten a term when a member died or resigned; where a districted seat shows two holders, the one whose term started later is kept.
+    chart_type: line
+    caveat_line: "Members seated one year into each Congress. Some pre-1850 birthdates missing; coverage shown."
+
+  - id: wealth_share_networth
+    display_name: Boomer-headed households' share of US household net worth
+    status_kind: measured
+    source:
+      name: Federal Reserve Board, Distributional Financial Accounts (DFA)
+      api: federalreserve.gov flat file
+      endpoint: releases/z1/dataviz/download/zips/dfa.zip → dfa-generation-levels.csv
+      series_id: Net worth by generation (levels); share computed as Boomer ÷ sum of generations
+    update_cadence: quarterly (~11 weeks after quarter end)
+    adjustment_pipeline: [share_from_levels]
+    known_confounds:
+      - Generation is that of the household's reference person; a Boomer-headed household counts wholly as Boomer.
+      - DFA values are revised with each Financial Accounts release; revisions of published numbers are logged as corrections.
+    chart_type: line
+    caveat_line: "Fed DFA. Households assigned by the generation of the household head."
+
+  - id: wealth_share_equities
+    display_name: Boomer-headed households' share of corporate equities & mutual funds
+    status_kind: measured
+    source:
+      name: Federal Reserve Board, Distributional Financial Accounts (DFA)
+      api: federalreserve.gov flat file
+      endpoint: dfa.zip → dfa-generation-levels.csv
+      series_id: Corporate equities and mutual fund shares by generation
+    update_cadence: quarterly
+    adjustment_pipeline: [share_from_levels]
+    known_confounds:
+      - Excludes equities held through pension entitlements, which DFA reports separately.
+      - Generation is that of the household's reference person.
+    chart_type: line
+    caveat_line: "Fed DFA. Directly held equities and mutual funds; pensions counted separately."
+
+  - id: wealth_share_realestate
+    display_name: Boomer-headed households' share of household real estate
+    status_kind: measured
+    source:
+      name: Federal Reserve Board, Distributional Financial Accounts (DFA)
+      api: federalreserve.gov flat file
+      endpoint: dfa.zip → dfa-generation-levels.csv
+      series_id: Real estate by generation (market value, not net of mortgages)
+    update_cadence: quarterly
+    adjustment_pipeline: [share_from_levels]
+    known_confounds:
+      - Gross market value; mortgages are not subtracted, so this is ownership of homes' value, not home equity.
+      - Generation is that of the household's reference person.
+    chart_type: line
+    caveat_line: "Fed DFA. Market value of real estate, before mortgages."
+
+landmarks:
+
+  - id: lm_wealth_under_half
+    display_name: Boomers hold under half of US household wealth
+    metric: wealth_share_networth
+    threshold: 50.0
+    direction: below
+    method: Linear trend of the quarterly share, fitted over several recent windows (3 to 7 years). Central = 5-year window; range = earliest and latest crossing across windows.
+    caveat_line: "Projection from recent trend. Market swings move this date by years."
+
+  - id: lm_congress_under_third
+    display_name: Boomers hold under a third of Congress
+    metric: congress_boomer_share
+    threshold: 33.3
+    direction: below
+    method: Linear trend of the Boomer share measured at the start of each Congress since the share peaked, plus today. Central = last 5 points; range = earliest and latest crossing across windows of 3 to 6 points.
+    caveat_line: "Projection from recent Congresses. Elections move in steps; this is a trend line, not a forecast of any race."
+
+  - id: lm_cohort_half_gone
+    display_name: Half of the peak Boomer population gone
+    metric: boomer_share_gone
+    threshold: 50.0
+    direction: above
+    method: Census 2023 National Population Projections by single year of age, scaled so 2025 matches the latest estimate. Range = low- and high-immigration projection series.
+    caveat_line: "Census projection. The range covers immigration scenarios only, not mortality surprises."

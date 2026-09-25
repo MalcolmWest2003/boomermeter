@@ -1,0 +1,131 @@
+# Methods
+
+This page explains where every number on Boomermeter comes from, what we do to it, and how sure we are. If a number
+on the site can't be traced back through this page, the public ledger and the source files, that's a bug. Please
+report it.
+
+[TOC]
+
+## Ground rules
+
+- **US only.** "Baby Boomer" is an American cohort, and every source here is American.
+- **Boomers = born 1946–1964.** Other generations follow Pew Research Center: Silent and earlier (≤1945), Gen X
+  (1965–1980), Millennials (1981–1996), Gen Z (1997+).
+- **Three kinds of number, always labeled:**
+    - *Measured*: read directly from a source release (a Fed quarter, a member's birthdate).
+    - *Estimate* (**est.**): computed between or after source releases. Always shown with a range.
+    - *Projection*: a date or value in the future. Always shown with a range, and in charts as a shaded band.
+- **No false precision.** Population counts are rounded to three significant figures. We never show a headcount to
+  the individual person.
+- **Shares start at zero.** Every chart of a percentage has a y-axis starting at 0%.
+- **Everything is kept.** Each source file is snapshotted with its SHA-256 fingerprint on the day we fetched it. Each
+  number the site displays is written to an append-only ledger with its source, vintage, method and date. Both live
+  in the public repository.
+
+## The meter: share of the peak Boomer population gone
+
+**What it shows:** 1 − (living Boomers in the US today ÷ living Boomers in the US at the 1999 peak).
+
+**The 100% mark** is 78.8 million: the Census Bureau's count of Boomers living in the US in 1999, the most there
+have ever been (Census report P25-1141; Pew Research Center cites the same figure). The peak is higher than the
+76 million babies born 1946–1964 because immigrants of the same ages joined the cohort. We use the peak rather than
+the birth count so the meter only ever moves one way.
+
+**"Gone" means no longer living in the US.** That is mostly deaths, but it also includes Boomers who emigrate. We don't
+separate them, and the meter shouldn't be read as a death count.
+
+**Who counts on a given day.** Census counts people by age on July 1. Following Census and Pew, "Boomers in year Y" is
+everyone aged Y−1964 through Y−1946 on July 1. That's a fixed group of people, born from roughly mid-1945 to
+mid-1964: the same convention the 1999 peak was counted with, so the top and bottom of the fraction match. For
+dates other than July 1, the group straddles one extra year of age; we split the two edge ages by how much of the
+year has passed since July 1.
+
+**Today's estimate.**
+
+1. Census publishes monthly population estimates by single year of age once a year (the *vintage*). Each vintage's
+   file also includes Census's own short-term projections for the following months. Where that file covers today,
+   we use it, interpolated to today's date.
+2. After Census's last published month, we carry the number forward at the average rate of decline over Census's
+   last 12 months.
+
+**The range.** We measure how wrong Census's previous vintage was. For every month after its last July 1, we
+compare what the previous vintage said with what the newer vintage now estimates for that same month. The range on
+today's number is the worst miss the previous vintage made at the same distance ahead or less. If today is further
+ahead than any month we can check, the worst miss is scaled up in proportion. If no comparison is possible, we fall
+back to ±0.05% per month past the last July 1 and say so.
+
+**Reconciliation.** When a new Census vintage lands, we compare the number we showed for its July 1 with what Census
+now says, and log the difference publicly. A difference over 0.5% becomes a correction on the front page.
+
+**Years under the meter** show where Census's 2023 projections put the meter in each future year. The projections
+are scaled so their value matches the latest Census estimate.
+
+## Landmarks
+
+Landmarks are projected dates. On the meter they are faint markers placed where the meter is projected to be on that
+date. Each has its own section with the chart it comes from and its range.
+
+| Landmark | Series | How the date is projected | How the range is set |
+|---|---|---|---|
+| Half the peak gone | Living Boomers | Census 2023 National Population Projections (middle series), scaled to the latest estimate | Census's low- and high-immigration series |
+| Boomers under half of household wealth | Fed DFA, quarterly | Straight-line trend over the last 5 years | Earliest and latest crossing using trends fitted over the last 3, 4, 5, 6 and 7 years |
+| Boomers under a third of Congress | Boomer share of seats | Straight-line trend over the last 5 measurements (one per Congress since the share peaked, plus today) | Earliest and latest crossing using the last 3–6 measurements |
+
+The trend-based ranges show how much the answer depends on how far back you look. They are not statistical
+confidence intervals, and they can't anticipate a crash, a boom or a wave election. The Census-based range covers
+immigration assumptions only. Mortality surprises, which matter more for people in their 60s–80s, are not in it.
+
+## Wealth
+
+**Source:** Federal Reserve Board, Distributional Financial Accounts (DFA), file `dfa-generation-levels.csv` in
+`dfa.zip`, updated quarterly about 11 weeks after each quarter ends.
+
+**Share** = Boomer-generation dollar level ÷ sum of all generations' levels, for that quarter.
+
+What to know:
+
+- **Households are assigned by the generation of the household head.** If a Millennial lives in a home headed by a
+  Boomer parent, that household's wealth counts as Boomer wealth. That pushes Boomer shares up somewhat.
+- **Net worth** is assets minus liabilities.
+- **Stocks & mutual funds** is the DFA's "corporate equities and mutual fund shares": what households hold directly.
+  Stocks held through pensions and retirement plans are in a separate DFA category and are not included here.
+- **Real estate** is market value, before mortgages. It measures who owns the homes' value, not who owns the equity.
+- **Revisions.** The Fed revises back data every quarter. When a quarter we've already displayed changes, the old and
+  new values go on the corrections list.
+
+## Congress
+
+**Source:** [unitedstates/congress-legislators](https://github.com/unitedstates/congress-legislators), a
+public-domain dataset of every member of Congress since 1789 with birthdates and terms. We fetch it daily.
+
+- **Voting members only.** Delegates from DC and the territories, and territorial delegates before statehood,
+  are excluded using each state's admission date.
+- **Median age** is computed from exact birthdates on the date shown.
+- **Generations** are assigned by birth year.
+- **History (1789 to today)** measures each Congress one year after it began. Before 1935, a new Congress's first
+  session often didn't meet until December, so a date closer to the start misses most members.
+- **Known data quirks.** A handful of early members have no recorded birthdate; they're left out of the median. The
+  dataset doesn't always shorten a term when a member died or resigned, so a seat can briefly show two holders. For
+  those seats we keep the member whose term started later.
+
+## Corrections policy
+
+If a source revises a number we've already shown, or a Census reconciliation moves the headcount by more than 0.5%,
+the old and new values are listed in the Corrections section on the front page with the date and reason. Nothing is
+quietly replaced; the full history is in the ledger.
+
+## What this page is not
+
+It's not a forecast of any person's life, any election, or any market. The projections extend recent trends and
+official Census assumptions so you can see roughly when landmarks arrive. Every one of them will move as new data
+comes in, and the page will show when they do.
+
+## Sources
+
+- U.S. Census Bureau, Population Estimates Program, national monthly estimates by single year of age (NC-EST ALLDATA),
+  current and prior vintages.
+- U.S. Census Bureau, 2023 National Population Projections, projected population by single year of age (np2023_d1),
+  middle, low- and high-immigration series.
+- U.S. Census Bureau, *The Baby Boom Cohort in the United States: 2012 to 2060* (P25-1141), for the 1999 peak.
+- Federal Reserve Board, Distributional Financial Accounts.
+- unitedstates/congress-legislators.
