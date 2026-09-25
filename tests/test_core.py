@@ -1,5 +1,6 @@
 import datetime as dt
 import json
+from pathlib import Path
 
 import pytest
 
@@ -59,6 +60,15 @@ def test_alldata_parser_filters_totals_and_reads_months():
     parsed = census.parse_alldata(synthetic.alldata_csv(2025))
     assert (2026, 12) in parsed and 999 not in parsed[(2025, 7)]
     assert len(parsed[(2025, 7)]) == 101
+    assert min(parsed) == (2020, 5)  # April 2020 base rows (4.1/4.2) skipped
+
+
+def test_alldata_parser_on_real_census_snapshot():
+    snaps = sorted(Path(__file__).parent.parent.glob("data/snapshots/census-pep/*/nc-est*-alldata-r-file*.csv"))
+    if not snaps:
+        pytest.skip("no real ALLDATA snapshot committed")
+    parsed = census.parse_alldata(snaps[0].read_bytes())
+    assert parsed and all(len(ages) == 101 for ages in parsed.values())
 
 
 def test_projection_parser_keeps_only_total_rows():

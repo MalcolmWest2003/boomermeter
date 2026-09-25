@@ -62,14 +62,17 @@ Verified against real data:
 
 Written against file layouts that could **not** be downloaded in the build environment. Check these on the first
 Actions run:
-- **Census ALLDATA** `nc-est{V}-alldata-r-file{NN}.csv`: assumed columns UNIVERSE, MONTH, YEAR, AGE, TOT_POP; AGE 999 =
-  total. File names and the 01–14 split came from Census's download page.
+- **Census ALLDATA** `nc-est{V}-alldata-r-file{NN}.csv`: columns UNIVERSE, MONTH, YEAR, AGE, TOT_POP (AGE 999 = total)
+  confirmed on V2025 file01 in the first Actions run (Sept 25). April 2020 is coded MONTH 4.1 (census) / 4.2
+  (estimates base); the parser skips those, so the monthly series starts May 2020. file01 holds only Apr–Jun 2020;
+  files 02+ are still unseen.
 - **Census projections** `np2023_d1_{mid,low,hi}.csv`: assumed columns NATIVITY/ORIGIN/RACE/SEX (0 = total), YEAR,
   POP_0…POP_100.
-- **Fed DFA** `dfa.zip` → `dfa-generation-levels.csv`: assumed columns Date ("2026:Q2"), Category (one containing
+- **Fed DFA** `dfa.zip` → `dfa-generation-levels.csv`: parsed cleanly on the first run (Boomer net worth share 52.5%,
+  2026 Q2; still to compare with the Fed's web page). Assumed columns Date ("2026:Q2"), Category (one containing
   "boom"), "Net worth", "Real estate", "Corporate equities and mutual fund shares". The parser matches loosely and
   fails with the actual column list if it can't.
-- Whether census.gov and federalreserve.gov accept requests from GitHub runners.
+- Both census.gov and federalreserve.gov accept requests from GitHub runners (confirmed on the first run).
 
 Checks after the first real run:
 - Boomer headcount for July 1, 2024 should be close to Pew's "about 67 million" (same convention).
