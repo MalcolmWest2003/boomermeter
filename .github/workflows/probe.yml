@@ -17,7 +17,7 @@ jobs:
     env:
       # --history: history indicators on live data. Or FRED ids / spreadsheet URLs to dump in full.
       # Empty: the whole candidate list in bm/probe.py.
-      PROBE_ARGS: --history
+      PROBE_ARGS: LNS14024887 LNS11324887 CUSR0000SEHA CUUR0000SEHA LNS14000012 LNS11300012
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
