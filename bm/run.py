@@ -19,6 +19,7 @@ from pathlib import Path
 
 from . import config, ledger, registry
 from .metrics import congress as congress_m
+from .metrics import handoff as handoff_m
 from .metrics import headcount as headcount_m
 from .metrics import history as history_m
 from .metrics import wealth as wealth_m
@@ -160,6 +161,13 @@ def run(demo: bool = False, congress_dir: Path | None = None) -> dict:
     section("wealth", do_wealth)
     section("history", do_history)
     section("literature", do_literature)
+
+    def do_handoff():
+        # Derived from the sections above (their fresh or last good data); no fetch.
+        data = {k: (state.get(k) or {}).get("data") for k in ("wealth", "headcount", "congress")}
+        return handoff_m.compute(data["wealth"], data["headcount"], data["congress"], today)
+
+    section("handoff", do_handoff)
     state["corrections"] = ledger.corrections()
     state["failures"] = [{k: v for k, v in f.items() if k != "trace"} for f in failures]
     site_build.build(state)

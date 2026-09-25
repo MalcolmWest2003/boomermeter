@@ -24,7 +24,7 @@ ERA_GENERATIONS = [
     ("Millennial", 1981, 1996),
     ("Gen Z", 1997, 2012),
 ]
-AGES = (25, 30, 35, 40)
+AGES = (18, 21, 25, 30, 35, 40)
 
 # FRED series used, with how each is reduced to calendar years.
 FRED_SERIES = {
@@ -32,8 +32,9 @@ FRED_SERIES = {
     "CPIAUCNS": "mean", "OPHNFB": "mean", "COMPRNFB": "mean", "AHETPI": "mean",
     "A4002E1A156NBEA": "mean", "CP": "mean", "GDP": "mean", "FEDMINNFRWG": "mean",
     "B075RC1Q027SBEA": "mean", "A053RC1Q027SBEA": "mean",
+    "LNS14000012": "mean", "LNS11300012": "mean", "CUUR0000SEHA": "mean",
 }
-DEFAULT_AGE = 30
+DEFAULT_AGE = 25
 MIN_YEARS = 3  # fewer observed years than this -> no value for that generation
 
 
@@ -148,6 +149,30 @@ def build(a: dict[str, dict[int, float]], tuition: dict[int, float] | None,
     add(id="hist_profit_share", topic="work", title="Corporate profits after tax, % of GDP",
         short="Profits' share", unit="pct", fmt="{:.1f}%", worse="higher", series=_ratio(a["CP"], a["GDP"], 100),
         inputs=["CP", "GDP"], note="BEA. Profits after tax, without inventory valuation and capital consumption adjustments.")
+    if "LNS14000012" in a:
+        add(id="hist_teen_unemployment", topic="work", title="Unemployment rate, ages 16 to 19",
+            short="Teen unemployment", unit="pct", fmt="{:.1f}%", worse="higher", series=a["LNS14000012"],
+            inputs=["LNS14000012"],
+            note="BLS Current Population Survey, seasonally adjusted, annual average. Share of 16-19-year-olds "
+                 "who want work and are looking but don't have a job.")
+    if "LNS11300012" in a:
+        add(id="hist_teen_participation", topic="work", title="Share of 16- to 19-year-olds working or looking for work",
+            short="Teens in the labor force", unit="pct", fmt="{:.0f}%", worse=None, series=a["LNS11300012"],
+            inputs=["LNS11300012"],
+            note="BLS Current Population Survey labor force participation rate, ages 16-19, annual average. "
+                 "It fell partly because more teens are in school, so lower is not simply worse.")
+    if "CUUR0000SEHA" in a and "AHETPI" in a:
+        rent = a["CUUR0000SEHA"]
+        wage = a["AHETPI"]
+        rw = {y: rent[y] / wage[y] for y in rent if y in wage}
+        if 1964 in rw:
+            add(id="hist_rent_vs_wage", topic="housing", title="Rent compared with the typical worker's hourly pay (1964 = 100)",
+                short="Rent vs pay", unit="index", fmt="{:.0f}", worse="higher", series=_rebase(rw, 1964),
+                inputs=["CUUR0000SEHA", "AHETPI"],
+                note="BLS consumer price index for rent of primary residence over BLS average hourly earnings of "
+                     "production and nonsupervisory workers, 1964 = 100. Above 100 means rent has grown faster than "
+                     "pay since 1964. The CPI rent index tracks the same homes over time, so it rises more slowly "
+                     "than new-lease asking rents.")
     minw = a["FEDMINNFRWG"]
     add(id="hist_real_min_wage", topic="work", title=f"Federal minimum wage in {base} dollars",
         short="Real minimum wage", unit="usd", fmt="${:.2f}", worse="lower", series=_real(minw, cpi, base),

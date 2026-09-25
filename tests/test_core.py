@@ -203,3 +203,33 @@ def test_history_pipeline_on_synthetic_inputs():
     ids = {i["id"] for i in site["indicators"]}
     assert {"hist_price_to_income", "hist_tuition_hours_min_wage", "hist_top_income_tax_rate"} <= ids
     assert all(e.metric_id.split("@")[0] in ids for e in entries)
+
+
+# --- handoff
+from bm.metrics import handoff
+
+
+def _wealth_state(boom, old):
+    qs = [f"{1989 + i // 4}-{3 * (i % 4) + 3:02d}-{30 if (i % 4) in (1, 2) else 31}" for i in range(len(boom))]
+    return {"series": {"networth": {"by_generation": {
+        "BabyBoom": [{"date": q, "value": v} for q, v in zip(qs, boom)],
+        "Silent": [{"date": q, "value": v} for q, v in zip(qs, old)]}}}, "sources": []}
+
+
+def test_transferred_and_comparators():
+    boom = [20 + i for i in range(40)] + [59 - 0.5 * i for i in range(20)]  # peak 59 then decline
+    old = [80 - 0.6 * i for i in range(60)]
+    wt = handoff.wealth_transfer(_wealth_state(boom, old))
+    assert wt["peak"] == 59 and abs(wt["transferred"] - 100 * (59 - boom[-1]) / 59) < 1e-9
+    c = {x["basis"]: x for x in wt["comparators"]}
+    assert c["years_after_peak"]["peak_is_lower_bound"]  # old group's max is its first observation
+
+
+def test_power_series_and_lead():
+    hist = []
+    for k, y in enumerate(range(1950, 2027, 2)):
+        share = {"Silent": max(0, 60 - abs(y - 1990) * 1.5), "Boomer": max(0, 63 - abs(y - 2014) * 1.2)}
+        hist.append({"date": f"{y}-01-03", "gen_share": share})
+    pt = handoff.power_transfer({"history": hist, "as_of": "2026-01-03", "gen_share_today": {}})
+    assert pt["peaks"]["Boomer"]["date"].startswith("2014")
+    assert 0 < pt["transferred"] < 100

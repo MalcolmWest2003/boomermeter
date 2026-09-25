@@ -122,11 +122,62 @@ public-domain dataset of every member of Congress since 1789 with birthdates and
   dataset doesn't always shorten a term when a member died or resigned, so a seat can briefly show two holders. For
   those seats we keep the member whose term started later.
 
+## The handoff: how far it has gone
+
+**Handed off** = the share of the Boomer *peak* share that other generations now hold:
+100 × (peak share − share now) ÷ peak share. 0% means Boomers are at their peak; 100% means they hold nothing.
+It is measured for two things:
+
+- **Wealth:** the Boomer share of US household net worth (Fed DFA, quarterly). Peak 2016.
+- **Power:** the Boomer share of voting seats in Congress, measured one year into each Congress and today. Peak 2014.
+
+This measures position, not gifts or bequests: a share falls when Boomers pass wealth on, but also when other
+generations' wealth grows faster. For wealth it moves with the stock market, which Boomers own more of.
+
+**Against earlier generations.** Each bar is compared with earlier generations in two ways:
+
+- *Same average age:* the generation's handed-off share when its middle birth year was the age Boomers' middle
+  birth year (1955) is now.
+- *Same years after peak:* the same measure the same number of years after that generation's own peak.
+
+For wealth, the only earlier group in the Fed's data is "Silent and earlier" (born before 1946), which includes the
+Greatest Generation. The DFA starts in 1989 Q3 and that group's share was highest at the first observation, so its true
+peak was at least that high: its handed-off figures are lower bounds ("at least"). Placing that group at the Silent
+Generation's middle birth year also flatters it, because the group includes older people. Both biases make the
+comparison conservative: the gap they show between Boomers and the generation before is, if anything, understated.
+
+For Congress, generations are: Missionary 1860–1882 and Lost 1883–1900 (Strauss and Howe), Greatest 1901–1927,
+Silent 1928–1945 and later (Pew). Values between Congress samples are interpolated linearly.
+
+## Share of the people, share of the wealth
+
+Each Fed DFA generation group's share of household net worth (Q2) next to its share of US residents aged 18 and over
+(Census PEP, July 1 of the same year, same cohort convention as the meter), grouped by the Fed's birth years: before
+1946, 1946–1964, 1965–1980, 1981 and later. The ratio is wealth share ÷ adult share. "Mean per adult" is the group's
+household net worth divided by its adults.
+
+- Wealth is counted by household head and population by person. Adult children living with Boomer parents add to
+  Boomer wealth but Millennial population, which raises the Boomer ratio.
+- A mean is pulled up by the richest households. It says how much wealth each generation holds per member, not what a
+  typical member has.
+- We use the latest July that Census has estimated (not its short-term projection), paired with the Fed's Q2.
+
+## Charts by age
+
+Most charts can be shown **by year** or **by age**. In the by-age view each line follows one generation: the value in
+the year its middle birth year reached each age (Boomers: 1955 + age). Reading straight up from an age compares
+generations at the same point in life. Lines for the topic pages run from birth to 70, so the youngest generations appear too; the wealth and Congress charts use
+the full range of the data.
+
 ## Then and now: generations at the same age
 
 The housing, work, college and taxes pages compare what each generation faced **at the same age**, because a
 comparison between "the 1970s" and "today" silently compares people at different points in life.
 
+- **Ages.** 18, 21, 25, 30, 35 and 40, so Gen Z (born 1997–2012) appears wherever at least three of its years are
+  observed.
+- **Your birth year.** The box on each topic page is computed in your browser from the same series; the year is kept
+  only in your browser's local storage.
 - **Windows.** For an age A, a generation's window is the calendar years in which its birth years turned A. Boomers
   (born 1946–1964) turned 30 in 1976–1994; Millennials (1981–1996) turn 30 in 2011–2026. The Silent Generation is
   taken as born 1928–1945 (Pew) so its window is closed.
@@ -149,6 +200,8 @@ comparison between "the 1970s" and "today" silently compares people at different
 | Productivity and pay | BLS output per hour and real hourly compensation, nonfarm business (both 1948 = 100); BLS average hourly earnings of production and nonsupervisory workers, CPI-U deflated, spliced to the compensation index at 1964 | The two pay lines bracket the measurement debate: compensation includes benefits and all earners and uses BLS's output deflator; the wage line excludes benefits and supervisors and uses CPI-U |
 | Labor's share | BEA compensation of employees, % of gross domestic income | Proprietors' income, part of which is labor income, is excluded |
 | Profits' share | BEA corporate profits after tax (without IVA and CCAdj) over GDP | Book profits |
+| Teen unemployment; teens in the labor force | BLS Current Population Survey, ages 16-19, seasonally adjusted (LNS14000012, LNS11300012) | Participation falls when more teens stay in school, so lower is not simply worse |
+| Rent against pay | BLS CPI rent of primary residence (CUUR0000SEHA) over BLS average hourly earnings of production and nonsupervisory workers (AHETPI), 1964 = 100 | The CPI rent index follows existing tenancies and rises more slowly than asking rents on new leases |
 | Real minimum wage | Federal minimum (Department of Labor), CPI-U deflated | Many states and cities set higher minimums |
 | Tuition in minimum-wage hours; real tuition | NCES Digest table 330.10, in-state tuition and required fees at public 4-year institutions (newest Digest edition), over the federal minimum wage | Sticker price before grants; the academic year is keyed to the calendar year it starts in |
 | Corporate tax take | BEA federal taxes on corporate income over corporate profits before tax | Book profits, all corporations; excludes state taxes |

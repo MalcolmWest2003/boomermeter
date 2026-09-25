@@ -429,6 +429,100 @@ metrics:
     chart_type: table
     caveat_line: "Other researchers' estimates, reported as published with what each measures."
 
+  - id: hist_teen_unemployment
+    display_name: "Unemployment rate, ages 16 to 19"
+    status_kind: measured
+    source:
+      name: "U.S. Bureau of Labor Statistics, Current Population Survey, via FRED"
+      api: fred.stlouisfed.org
+      endpoint: "graph/fredgraph.csv?id=<series>"
+      series_id: "LNS14000012"
+    update_cadence: "monthly source, annual mean"
+    adjustment_pipeline: [annual_mean]
+    known_confounds:
+      - "Survey estimate; teen samples are small and monthly values are noisy."
+    chart_type: line_with_generation_windows
+    caveat_line: "BLS CPS, ages 16-19, seasonally adjusted."
+
+  - id: hist_teen_participation
+    display_name: "Labor force participation rate, ages 16 to 19"
+    status_kind: measured
+    source:
+      name: "U.S. Bureau of Labor Statistics, Current Population Survey, via FRED"
+      api: fred.stlouisfed.org
+      endpoint: "graph/fredgraph.csv?id=<series>"
+      series_id: "LNS11300012"
+    update_cadence: "monthly source, annual mean"
+    adjustment_pipeline: [annual_mean]
+    known_confounds:
+      - "Falls when more teens stay in school, so a lower rate is not simply worse."
+    chart_type: line_with_generation_windows
+    caveat_line: "BLS CPS, ages 16-19."
+
+  - id: hist_rent_vs_wage
+    display_name: "CPI rent of primary residence over average hourly earnings of production and nonsupervisory workers (1964 = 100)"
+    status_kind: measured
+    source:
+      name: "U.S. Bureau of Labor Statistics (CUUR0000SEHA, AHETPI), via FRED"
+      api: fred.stlouisfed.org
+      endpoint: "graph/fredgraph.csv?id=<series>"
+      series_id: "CUUR0000SEHA, AHETPI"
+    update_cadence: "monthly source, annual mean"
+    adjustment_pipeline: [annual_mean, ratio, rebase_1964]
+    known_confounds:
+      - "The CPI rent index follows existing tenancies and rises more slowly than asking rents for new leases."
+    chart_type: line_with_generation_windows
+    caveat_line: "BLS rent index over BLS hourly earnings, 1964 = 100."
+
+  # ---- Handoff: how far the transfer has gone (bm/metrics/handoff.py)
+  - id: handoff_wealth_transferred
+    display_name: "Share of the Boomer peak share of household net worth that has passed to other generations"
+    status_kind: measured
+    source:
+      name: Federal Reserve Board, Distributional Financial Accounts (DFA)
+      api: federalreserve.gov flat file
+      endpoint: dfa.zip → dfa-generation-levels.csv
+      series_id: Net worth by generation; Boomer share of the sum of generations
+    update_cadence: quarterly
+    adjustment_pipeline: [share_from_levels, peak_share, one_minus_now_over_peak]
+    known_confounds:
+      - "A share can fall because other generations' wealth grows, not only because Boomers pass wealth on; this measures position, not gifts or bequests."
+      - "Stock market swings move the Boomer share, since Boomers hold more of the stock market."
+      - "The DFA's oldest group includes everyone born before 1946 and starts in 1989, so its peak is a lower bound."
+    chart_type: transfer_bar
+    caveat_line: "Fed DFA. 0% = Boomers at their peak share of household wealth; 100% = none left."
+
+  - id: handoff_power_transferred
+    display_name: "Share of the Boomer peak share of Congress that has passed to other generations"
+    status_kind: measured
+    source:
+      name: unitedstates/congress-legislators
+      api: GitHub raw files
+      endpoint: legislators-historical.yaml + legislators-current.yaml
+      series_id: members seated one year into each Congress, by generation of birth year; today
+    update_cadence: continuous
+    adjustment_pipeline: [exclude_nonvoting_delegates, generation_by_birth_year, peak_share, one_minus_now_over_peak]
+    known_confounds:
+      - "Lost (1883-1900) follows Strauss & Howe; Greatest onward follow Pew."
+    chart_type: transfer_bar
+    caveat_line: "Seats held by Boomers, relative to their 2014 peak."
+
+  - id: wealth_share_vs_adult_share
+    display_name: "Each generation's share of household net worth divided by its share of US adults"
+    status_kind: measured
+    source:
+      name: "Federal Reserve Board DFA (net worth); U.S. Census Bureau PEP (adults by single year of age)"
+      api: federalreserve.gov; www2.census.gov
+      endpoint: dfa.zip; nc-est{vintage}-alldata-r-file*.csv
+      series_id: DFA generation net worth, Q2; Census resident population 18+, July 1
+    update_cadence: quarterly (wealth), annual (population)
+    adjustment_pipeline: [share_from_levels, adults_by_dfa_birth_years, ratio]
+    known_confounds:
+      - "Wealth is counted by household head; population by person. Adult children living with Boomer parents count as Boomer wealth but Millennial population, which raises the Boomer ratio."
+      - "Mean wealth per adult is pulled up by the richest households in every group."
+    chart_type: paired_bars
+    caveat_line: "Fed DFA wealth by household head; Census adults 18+ by birth year."
+
 landmarks:
 
   - id: lm_wealth_under_half

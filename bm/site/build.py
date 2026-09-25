@@ -13,7 +13,7 @@ from .. import config, landmarks, stats
 from ..metrics import headcount as hc
 import yaml
 
-from . import topics
+from . import handoff_views, topics
 from .svg import esc, line_chart, stacked_bar
 
 REPO_URL = "https://github.com/MalcolmWest2003/boomermeter"
@@ -113,7 +113,7 @@ def meter(state: dict, lms: list[dict]) -> str:
   <div class="meter-head">
     <div class="big">{gone:.1f}<span class="pct">%</span></div>
     <div class="meter-copy">
-      <p class="meter-lede">of the Boomer generation at its peak is gone {est_tag('interpolated')}</p>
+      <p class="meter-lede">{esc((topics.site_copy().get("home") or {}).get("meter_label", "of the Boomer generation at its peak is gone"))} {est_tag('interpolated')}</p>
       <p class="meter-sub">About <strong>{stats.fmt_millions(h['value'])}</strong> Boomers live in the US today,
       down from <strong>78.8 million</strong> at the {h['peak_year']} peak.
       Range: {stats.fmt_millions(h['low'])} – {stats.fmt_millions(h['high'])}.</p>
@@ -305,7 +305,7 @@ def same_age_block(w: dict) -> str:
             if gen != "Boomer" and ref:
                 delta = f'<div class="cmp-d">{v["mean"] - ref:+.1f} pts vs Boomers</div>'
             part = "" if v["complete"] else f'<span class="sofar">{v["quarters"]} quarters of data</span>'
-            out.append(f'<div class="cmp-card" style="--c:var({topics.GEN_VARS[gen]})"><div class="cmp-g">{esc(gen)}</div>'
+            out.append(f'<div class="cmp-card" style="--c:var({handoff_views.GEN_VARS[gen]})"><div class="cmp-g">{esc(gen)}</div>'
                        f'<div class="cmp-v">{v["mean"]:.1f}%</div>'
                        f'<div class="cmp-w">{v["from"][:4]}–{v["to"][:4]} {part}</div>'
                        f'<div class="cmp-r">range {v["low"]:.1f}% – {v["high"]:.1f}%</div>{delta}</div>')
@@ -313,10 +313,11 @@ def same_age_block(w: dict) -> str:
 
     nw = sa["by_column"].get("networth", {})
     lead = ""
-    if "Boomer" in nw and "Millennial" in nw:
+    mill = nw.get("Millennial & younger")
+    if "Boomer" in nw and mill:
         lead = (f'<p class="lede">When the average Boomer was {age}, Boomer households held '
-                f'<strong>{nw["Boomer"]["mean"]:.1f}%</strong> of US household net worth. At the same age, Millennial '
-                f'households hold <strong>{nw["Millennial"]["mean"]:.1f}%</strong>.</p>')
+                f'<strong>{nw["Boomer"]["mean"]:.1f}%</strong> of US household net worth. At the same age, households '
+                f'headed by Millennials and younger hold <strong>{mill["mean"]:.1f}%</strong>.</p>')
     return f"""
   <h3 id="same-age">At the same age</h3>
   {lead}
@@ -471,18 +472,18 @@ def page(title: str, body: str, description: str, current: str = "index.html") -
     cur = ' aria-current="page"'
     nav = "".join(f'<a href="{href}"{cur if href == current else ""}>{label}</a>' for href, label in NAV)
     return f"""<!doctype html>
-<html lang="en" data-age="30"><head><meta charset="utf-8">
+<html lang="en" data-age="25" data-view="age"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{esc(title)}</title>
 <meta name="description" content="{esc(description)}">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400..700&display=swap" rel="stylesheet">
 <style>{css}</style></head>
 <body>
 <header class="top"><a class="brand" href="index.html">BOOMERMETER</a>
 <nav>{nav}</nav></header>
 <main>{body}</main>
-<footer><p>US data only. Every number is sourced; every estimate is labeled. <a href="methods.html">Methods</a> ·
+<footer><p>US data only. Sources for every number are on the <a href="sources.html">sources page</a>. <a href="methods.html">Methods</a> ·
 <a href="sources.html#corrections">Corrections</a> · <a href="data/latest.json">Data (JSON)</a> ·
 <a href="data/ledger.jsonl">Ledger</a> · <a href="{REPO_URL}">Code</a></p></footer>
 <div id="tt" class="tt" hidden></div>
@@ -504,14 +505,15 @@ EXPLORE = [
 def explore_grid(state: dict) -> str:
     hist = (state.get("history") or {}).get("data") or {}
     cards = []
+    hc = topics.site_copy().get("home") or {}
     for href, title, text in EXPLORE:
         key = href.split(".")[0]
+        text = (hc.get("explore") or {}).get(key, text)
         line = text or topics.headline(key, hist) or topics.TOPICS[key]["lede"]
         cards.append(f'<a class="ex-card" href="{href}"><div class="ex-t">{esc(title)} →</div>'
                      f'<div class="ex-l">{line}</div></a>')
-    return (f'<section class="explore"><h2 class="kicker">Then and now</h2>'
-            f'<p class="lede">What each generation faced at the same age: homes, pay, college, taxes, and who holds '
-            f'the wealth and the seats. Every comparison is sourced and every range printed.</p>'
+    return (f'<section class="explore"><h2 class="kicker">{esc(hc.get("explore_title", "Then and now"))}</h2>'
+            f'<p class="lede">{esc(hc.get("explore_lede", ""))}</p>'
             f'<div class="ex-grid">{"".join(cards)}</div></section>')
 
 
@@ -528,15 +530,23 @@ def build(state: dict, out: Path = config.SITE_OUT) -> Path:
     banner = ('<div class="demo">PREVIEW — the Census and Fed numbers on this page are placeholders for layout only. '
               'The live site uses the pipeline’s real data.</div>' if demo else "")
     updated = nice_date(state["run_date"])
+    handoff = (state.get("handoff") or {}).get("data") or {}
+    hc = topics.site_copy().get("home") or {}
+    home_title = "The handoff, counted."
+    wp = handoff.get("wealth_vs_population") or {}
+    if wp.get("latest_year") and hc.get("title"):
+        b = wp["by_year"][wp["latest_year"]].get("Boomer")
+        if b:
+            home_title = hc["title"].format(boomer_adult_pct=round(b["adult_share"]),
+                                            boomer_wealth_pct=round(b["wealth_share"]))
     body = f"""{banner}
 <section class="hero">
-  <h1>The handoff, counted.</h1>
-  <p class="hero-lede">The Baby Boom generation has held the center of American wealth and political power longer than
-  any generation before it. This site tracks the transfer as it happens, and what each generation faced on the way,
-  with sources you can check and every estimate labeled as one.</p>
+  <h1>{esc(home_title)}</h1>
+  <p class="hero-lede">{esc(hc.get("lede", ""))}</p>
   <p class="updated">Updated {updated}</p>
 </section>
 {meter(state, lms)}
+{handoff_views.handoff_summary(handoff)}
 {landmark_cards(lms)}
 {explore_grid(state)}
 {coming_section()}"""
@@ -547,8 +557,22 @@ def build(state: dict, out: Path = config.SITE_OUT) -> Path:
         pages[href] = (f"{title} — Boomermeter", banner + f'<p class="kicker crumb"><a href="index.html">Boomermeter</a> / {esc(title)}</p>' + inner)
 
     sub("population.html", "Population", cohort_section(state))
-    sub("wealth.html", "Wealth", wealth_section(state))
-    sub("power.html", "Power", congress_section(state))
+    wdata = (state.get("wealth") or {}).get("data")
+    wealth_top = ""
+    if handoff.get("wealth_vs_population"):
+        wealth_top += handoff_views.wealth_vs_population(handoff["wealth_vs_population"])
+    if handoff.get("wealth_transfer"):
+        wealth_top += ('<section class="block" id="handoff"><h2>How much has been handed off</h2>'
+                       + handoff_views.transfer_bar("wealth", handoff["wealth_transfer"]) + "</section>")
+    if wdata:
+        wealth_top += handoff_views.wealth_generations(wdata, handoff)
+    sub("wealth.html", "Wealth", wealth_top + wealth_section(state))
+    power_top = ""
+    if handoff.get("power_transfer"):
+        power_top = ('<section class="block" id="handoff"><h2>How much power has been handed off</h2>'
+                     + handoff_views.transfer_bar("power", handoff["power_transfer"]) + "</section>"
+                     + handoff_views.congress_generations(handoff["power_transfer"]))
+    sub("power.html", "Power", power_top + congress_section(state))
     hist = (state.get("history") or {}).get("data")
     lit = literature(state)
     for key in topics.ORDER:

@@ -31,7 +31,10 @@ def shares(parsed: dict) -> dict[str, dict]:
 # DFA generation labels -> birth years (Pew), for "when the average member was A".
 DFA_BIRTH_YEARS = {"Silent": (1928, 1945), "BabyBoom": (1946, 1964), "GenX": (1965, 1980),
                    "Millennial": (1981, 1996)}
-DFA_DISPLAY = {"Silent": "Silent", "BabyBoom": "Boomer", "GenX": "Gen X", "Millennial": "Millennial"}
+# The Fed's own group names: its oldest group is everyone born before 1946 and its
+# youngest is everyone born 1981 or later (so it includes Gen Z).
+DFA_DISPLAY = {"Silent": "Silent & earlier", "BabyBoom": "Boomer", "GenX": "Gen X",
+               "Millennial": "Millennial & younger"}
 SAME_AGE = 35
 SAME_AGE_HALF_WIDTH = 2  # years either side of the year the average member turned SAME_AGE
 
@@ -76,6 +79,9 @@ def compute(parsed: dict, prov: list[dict], today: dt.date, reg: dict) -> tuple[
             "boomer": [{"date": q.isoformat(), "value": v} for q, v in sorted(b.items())],
             "by_generation": {g: [{"date": q.isoformat(), "value": v} for q, v in sorted(s.items())]
                               for g, s in sh[col]["by_generation"].items()},
+            # dollar levels ($ millions, nominal) by generation, for per-adult comparisons
+            "levels": {g: [{"date": q.isoformat(), "value": v} for q, v in sorted(lv.items())]
+                       for g, lv in parsed["levels"][col].items()},
             "peak": max(b.items(), key=lambda kv: kv[1]),
         }
         site["series"][col]["peak"] = {"date": site["series"][col]["peak"][0].isoformat(),
