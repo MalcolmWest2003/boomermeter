@@ -1,0 +1,10 @@
+{
+ "run_date": "2026-09-25",
+ "failures": [
+  {
+   "section": "headcount",
+   "error": "ValueError: invalid literal for int() with base 10: '4.2'",
+   "trace": "Traceback (most recent call last):\n  File \"/home/runner/work/boomermeter/boomermeter/bm/run.py\", line 77, in section\n    entries, data = fn()\n                    ^^^^\n  File \"/home/runner/work/boomermeter/boomermeter/bm/run.py\", line 98, in do_headcount\n    pep = census.latest_alldata(max_vintage=today.year)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/boomermeter/boomermeter/bm/sources/census.py\", line 74, in latest_alldata\n    cur, prov = fetch_alldata(v)\n                ^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/boomermeter/boomermeter/bm/sources/census.py\", line 64, in fetch_alldata\n    merged.update(parse_alldata(snap.content))\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/boomermeter/boomermeter/bm/sources/census.py\", line 46, in parse_alldata\n    key = (int(r[cols[\"YEAR\"]]), int(r[cols[\"MONTH\"]]))\n                                 ^^^^^^^^^^^^^^^^^^^^^\nValueError: invalid literal for int() with base 10: '4.2'\n"
+  }
+ ]
+}
