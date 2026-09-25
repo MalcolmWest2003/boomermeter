@@ -31,7 +31,10 @@ def shares(parsed: dict) -> dict[str, dict]:
 # DFA generation labels -> birth years (Pew), for "when the average member was A".
 DFA_BIRTH_YEARS = {"Silent": (1928, 1945), "BabyBoom": (1946, 1964), "GenX": (1965, 1980),
                    "Millennial": (1981, 1996)}
-DFA_DISPLAY = {"Silent": "Silent", "BabyBoom": "Boomer", "GenX": "Gen X", "Millennial": "Millennial"}
+# The Fed's own group names: its oldest group is everyone born before 1946 and its
+# youngest is everyone born 1981 or later (so it includes Gen Z).
+DFA_DISPLAY = {"Silent": "Silent & earlier", "BabyBoom": "Boomer", "GenX": "Gen X",
+               "Millennial": "Millennial & younger"}
 SAME_AGE = 35
 SAME_AGE_HALF_WIDTH = 2  # years either side of the year the average member turned SAME_AGE
 

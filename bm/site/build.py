@@ -305,7 +305,7 @@ def same_age_block(w: dict) -> str:
             if gen != "Boomer" and ref:
                 delta = f'<div class="cmp-d">{v["mean"] - ref:+.1f} pts vs Boomers</div>'
             part = "" if v["complete"] else f'<span class="sofar">{v["quarters"]} quarters of data</span>'
-            out.append(f'<div class="cmp-card" style="--c:var({topics.GEN_VARS[gen]})"><div class="cmp-g">{esc(gen)}</div>'
+            out.append(f'<div class="cmp-card" style="--c:var({handoff_views.GEN_VARS[gen]})"><div class="cmp-g">{esc(gen)}</div>'
                        f'<div class="cmp-v">{v["mean"]:.1f}%</div>'
                        f'<div class="cmp-w">{v["from"][:4]}–{v["to"][:4]} {part}</div>'
                        f'<div class="cmp-r">range {v["low"]:.1f}% – {v["high"]:.1f}%</div>{delta}</div>')
@@ -313,10 +313,11 @@ def same_age_block(w: dict) -> str:
 
     nw = sa["by_column"].get("networth", {})
     lead = ""
-    if "Boomer" in nw and "Millennial" in nw:
+    mill = nw.get("Millennial & younger")
+    if "Boomer" in nw and mill:
         lead = (f'<p class="lede">When the average Boomer was {age}, Boomer households held '
-                f'<strong>{nw["Boomer"]["mean"]:.1f}%</strong> of US household net worth. At the same age, Millennial '
-                f'households hold <strong>{nw["Millennial"]["mean"]:.1f}%</strong>.</p>')
+                f'<strong>{nw["Boomer"]["mean"]:.1f}%</strong> of US household net worth. At the same age, households '
+                f'headed by Millennials and younger hold <strong>{mill["mean"]:.1f}%</strong>.</p>')
     return f"""
   <h3 id="same-age">At the same age</h3>
   {lead}
