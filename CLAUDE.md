@@ -63,10 +63,10 @@ Verified against real data:
 Written against file layouts that could **not** be downloaded in the build environment. Check these on the first
 Actions run:
 - **Census ALLDATA** `nc-est{V}-alldata-r-file{NN}.csv`: columns UNIVERSE, MONTH, YEAR, AGE, TOT_POP (AGE 999 = total)
-  confirmed on V2025 file01 in the first Actions run (Sept 25). April 2020 is coded MONTH 4.1 (census) / 4.2
-  (estimates base); the parser skips those, so the monthly series starts May 2020. file01 holds only Apr–Jun 2020;
-  files 02+ are still unseen.
-- **Census projections** `np2023_d1_{mid,low,hi}.csv`: assumed columns NATIVITY/ORIGIN/RACE/SEX (0 = total), YEAR,
+  confirmed on all 14 V2025 files and 12 V2024 files (Sept 25 runs). April 2020 is coded MONTH 4.1 (census) / 4.2
+  (estimates base); the parser skips those, so the monthly series starts May 2020. Boomer headcount July 1, 2024 =
+  67.8M (Pew: "about 67 million"); July 1, 2025 = 66.6M.
+- **Census projections** `np2023_d1_{mid,low,hi}.csv`: parsed cleanly on the Sept 25 run. Assumed columns NATIVITY/ORIGIN/RACE/SEX (0 = total), YEAR,
   POP_0…POP_100.
 - **Fed DFA** `dfa.zip` → `dfa-generation-levels.csv`: parsed cleanly on the first run (Boomer net worth share 52.5%,
   2026 Q2; still to compare with the Fed's web page). Assumed columns Date ("2026:Q2"), Category (one containing
