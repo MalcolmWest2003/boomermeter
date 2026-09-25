@@ -167,10 +167,18 @@ footer { border-top: 1px solid var(--rule); padding: 20px 16px 40px; font-size: 
 svg .gw rect { opacity: .13; }
 svg .gwlabel { font: 600 10.5px "IBM Plex Mono", monospace; }
 .gw, .cmp { display: none; }
-html[data-age="25"] .gw[data-age="25"], html[data-age="30"] .gw[data-age="30"],
-html[data-age="35"] .gw[data-age="35"], html[data-age="40"] .gw[data-age="40"] { display: inline; }
-html[data-age="25"] .cmp[data-age="25"], html[data-age="30"] .cmp[data-age="30"],
-html[data-age="35"] .cmp[data-age="35"], html[data-age="40"] .cmp[data-age="40"] { display: block; }
+html[data-age="18"] .gw[data-age="18"],
+html[data-age="21"] .gw[data-age="21"],
+html[data-age="25"] .gw[data-age="25"],
+html[data-age="30"] .gw[data-age="30"],
+html[data-age="35"] .gw[data-age="35"],
+html[data-age="40"] .gw[data-age="40"] { display: inline; }
+html[data-age="18"] .cmp[data-age="18"],
+html[data-age="21"] .cmp[data-age="21"],
+html[data-age="25"] .cmp[data-age="25"],
+html[data-age="30"] .cmp[data-age="30"],
+html[data-age="35"] .cmp[data-age="35"],
+html[data-age="40"] .cmp[data-age="40"] { display: block; }
 .cmp-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-top: 12px; }
 .cmp-card { padding: 10px 12px; background: var(--surface); border: 1px solid var(--rule); border-top: 3px solid var(--c);
   border-radius: 8px; }
@@ -226,3 +234,10 @@ svg .gw.strong rect { opacity: .55; }
   .wp-row { grid-template-columns: 1fr; gap: 4px; }
   .wp-bars { margin-right: 110px; }
 }
+.meaning { font-size: 16px; margin: 6px 0 12px; }
+.concl { font-size: 16px; font-weight: 500; margin: 14px 0 0; }
+.you-in { margin: 18px 0 4px; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; }
+.you-in label { font-weight: 600; }
+.you-in input { width: 7em; margin-left: 8px; padding: 6px 8px; font: inherit; border: 1px solid var(--ink-3);
+  border-radius: 4px; background: var(--surface); color: var(--ink); }
+.cmp-card.you { border-style: dashed; }

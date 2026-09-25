@@ -53,7 +53,7 @@
   }
   var saved = null;
   try { saved = localStorage.getItem(KEY); } catch (e) {}
-  if (saved && /^(25|30|35|40)$/.test(saved)) set(saved);
+  if (saved && /^(18|21|25|30|35|40)$/.test(saved)) set(saved);
   document.querySelectorAll(".agepick button").forEach(function (b) {
     b.addEventListener("click", function () { set(b.dataset.age); });
   });
@@ -76,4 +76,45 @@
   try { saved = localStorage.getItem(KEY); } catch (e) {}
   set(saved || btns[0].dataset.view);
   btns.forEach(function (b) { b.addEventListener("click", function () { set(b.dataset.view); }); });
+})();
+
+// Birth year: fill the "You" card under each chart for the selected age.
+(function () {
+  var input = document.getElementById("birth-year");
+  if (!input) return;
+  var KEY = "bm-birth-year", data = {};
+  document.querySelectorAll("script.ind-data").forEach(function (b) {
+    var d = JSON.parse(b.textContent), m = {};
+    d.years.forEach(function (y, i) { m[y] = d.values[i]; });
+    d.map = m; d.first = d.years[0]; d.last = d.years[d.years.length - 1];
+    data[b.dataset.id] = d;
+  });
+  function fmt(spec, v) {
+    var m = spec.match(/\{:(,?)\.(\d)f\}/);
+    if (!m) return String(v);
+    var n = Number(v).toLocaleString("en-US", { minimumFractionDigits: +m[2], maximumFractionDigits: +m[2],
+                                                 useGrouping: m[1] === "," });
+    return spec.replace(m[0], n);
+  }
+  function update() {
+    var b = parseInt(input.value, 10), ok = b >= 1928 && b <= 2026;
+    try { ok ? localStorage.setItem(KEY, String(b)) : localStorage.removeItem(KEY); } catch (e) {}
+    document.querySelectorAll(".cmp-card.you").forEach(function (card) {
+      var d = data[card.dataset.ind];
+      if (!ok || !d) { card.hidden = true; return; }
+      var age = +card.dataset.age, y = b + age, v = d.map[y];
+      var born = d.map[b] !== undefined ? fmt(d.fmt, d.map[b]) : (b < d.first ? "before this data starts" : "n/a");
+      var now = fmt(d.fmt, d.map[d.last]);
+      var main = v !== undefined ? fmt(d.fmt, v) : "not yet";
+      var when = v !== undefined ? "at " + age + ", in " + y :
+                 (y > d.last ? "you turn " + age + " in " + y : "no data for " + y);
+      card.innerHTML = '<div class="cmp-g">You, born ' + b + '</div><div class="cmp-v">' + main + '</div>' +
+        '<div class="cmp-w">' + when + '</div><div class="cmp-r">the year you were born: ' + born +
+        '<br>latest (' + d.last + '): ' + now + '</div>';
+      card.hidden = false;
+    });
+  }
+  try { var s = localStorage.getItem(KEY); if (s) input.value = s; } catch (e) {}
+  input.addEventListener("input", update);
+  update();
 })();

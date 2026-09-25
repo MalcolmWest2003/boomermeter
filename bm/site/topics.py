@@ -2,6 +2,8 @@
 what each generation faced at the same age, with sources and caveats."""
 from __future__ import annotations
 
+import json
+
 from .svg import esc, line_chart
 
 GEN_VARS = {"Silent": "--gen-silent", "Boomer": "--gen-boomer", "Gen X": "--gen-x",
@@ -20,6 +22,10 @@ TOPICS = {
         "charts": [
             {"ids": ["hist_price_to_income"], "compare": "hist_price_to_income",
              "head": "Home prices against family income"},
+            {"ids": ["hist_rent_vs_wage"], "compare": "hist_rent_vs_wage",
+             "head": "Rent against pay",
+             "text": "Before anyone buys, they rent. This follows rent and the typical worker's hourly pay from the "
+                     "same starting point in 1964."},
             {"ids": ["hist_down_payment_months"], "compare": "hist_down_payment_months",
              "head": "Saving for the down payment",
              "text": "The price hurdle shows up first as the down payment: money that has to be saved before the "
@@ -50,6 +56,9 @@ TOPICS = {
             {"ids": ["hist_labor_share"], "compare": "hist_labor_share", "head": "Labor's share of income"},
             {"ids": ["hist_profit_share"], "compare": "hist_profit_share", "head": "Corporate profits' share"},
             {"ids": ["hist_real_min_wage"], "compare": "hist_real_min_wage", "head": "The minimum wage"},
+            {"ids": ["hist_teen_unemployment"], "compare": "hist_teen_unemployment", "head": "A first job"},
+            {"ids": ["hist_teen_participation"], "compare": "hist_teen_participation",
+             "head": "How many teens work"},
         ],
     },
     "college": {
@@ -80,6 +89,79 @@ TOPICS = {
 }
 ORDER = ["housing", "work", "college", "taxes"]
 
+# What each number is, in plain words. Shown above every chart.
+MEANING = {
+    "hist_price_to_income": "How many years of a typical family's entire income it takes to equal the price of a "
+                            "typical new house. Higher means harder to buy.",
+    "hist_down_payment_months": "How many months of a typical family's pay you would need to save for a 20% down "
+                                "payment, if you spent nothing on rent, food or anything else.",
+    "hist_mortgage_payment_share": "How much of a typical family's income the monthly mortgage payment would take, "
+                                   "buying the typical new house with 20% down.",
+    "hist_mortgage_rate": "The interest rate on a typical 30-year home loan.",
+    "hist_productivity_index": "How much more a worker produces in an hour than in 1948, next to how much more "
+                               "workers are paid. If pay kept up with output, the lines would move together.",
+    "hist_labor_share": "Out of every dollar the economy earns, how many cents go to workers as pay and benefits. "
+                        "The rest goes to owners: profits, rent and interest.",
+    "hist_profit_share": "Corporate profits after tax, as a slice of everything the economy produces.",
+    "hist_real_min_wage": "The federal minimum wage, converted to today's dollars so different years can be compared.",
+    "hist_tuition_hours_min_wage": "How many hours at the federal minimum wage it takes to pay one year of in-state "
+                                   "tuition at a public university. A full-time job is about 2,000 hours a year.",
+    "hist_tuition_real": "One year of in-state tuition and fees at a public university, in today's dollars.",
+    "hist_rent_vs_wage": "How much rent has grown compared with an ordinary worker's hourly pay, both starting at "
+                         "100 in 1964. At 150, rent has grown half again as fast as pay.",
+    "hist_teen_unemployment": "Out of every 100 teenagers (16 to 19) who are looking for work, how many can't find "
+                              "a job.",
+    "hist_teen_participation": "Out of every 100 people aged 16 to 19, how many have a job or are looking for one.",
+    "hist_top_income_tax_rate": "The federal income tax rate on the highest slice of the highest incomes.",
+    "hist_corp_effective_tax": "Out of every dollar of corporate profit, how many cents go to the federal government "
+                               "as corporate income tax.",
+}
+GEN_NOUN = {"Silent": "the Silent Generation", "Boomer": "Boomers", "Gen X": "Gen X", "Millennial": "Millennials",
+            "Gen Z": "Gen Z"}
+
+
+def _compare_words(ind: dict, v: float, ref: float) -> str:
+    """'about 30% more', '2.4 times as much', '6 points lower', 'about the same'."""
+    if ind["unit"] == "pct":
+        d = v - ref
+        if abs(d) < 0.5:
+            return "about the same as"
+        return f"{abs(d):.0f} percentage points {'higher' if d > 0 else 'lower'} than"
+    r = v / ref if ref else 1
+    if r >= 1.95:
+        return f"{r:.1f} times"
+    if r > 1.05:
+        return f"about {round((r - 1) * 100)}% higher than"
+    if r < 0.95:
+        return f"about {round((1 - r) * 100)}% lower than"
+    return "about the same as"
+
+
+def conclusion(ind: dict, age: int) -> str:
+    """A plain sentence comparing the youngest generation with data to Boomers at the same age."""
+    gens = ind["at_age"].get(str(age), {})
+    boom = gens.get("Boomer")
+    young = next((g for g in ("Gen Z", "Millennial", "Gen X") if g in gens), None)
+    if not boom or not young:
+        return ""
+    f, v = ind["fmt"], gens[young]
+    words = _compare_words(ind, v["mean"], boom["mean"])
+    so_far = " so far" if not v["complete"] else ""
+    same = words.startswith("about the same")
+    tail = "" if same else f" what Boomers faced ({f.format(boom['mean'])})"
+    head = f"At {age}, {GEN_NOUN[young]}{so_far} have faced {f.format(v['mean'])}: "
+    if same:
+        body = f"about the same as Boomers at {age} ({f.format(boom['mean'])})."
+    elif words.endswith("times"):
+        body = f"{words}{tail}."
+    else:
+        body = f"{words}{tail}."
+    extra = ""
+    if young == "Gen Z" and "Millennial" in gens:
+        extra = f" Millennials at {age}: {f.format(gens['Millennial']['mean'])}."
+    return f'<p class="concl">{head}{body}{extra}</p>'
+
+
 
 def _ind_map(hist: dict) -> dict:
     return {i["id"]: i for i in hist.get("indicators", [])}
@@ -100,7 +182,7 @@ def by_age_chart(ind: dict, ages: list[int], cid: str, y_ticks: list[float], tic
     vals = dict(zip(ind["years"], ind["values"]))
     series = []
     for gen, mid in GEN_MID.items():
-        pts = [(y - mid, v) for y, v in vals.items() if 15 <= y - mid <= 70]
+        pts = [(y - mid, v) for y, v in vals.items() if 0 <= y - mid <= 70]
         if len(pts) >= 3:
             series.append({"name": GEN_SHORT[gen], "points": pts, "color": GEN_VARS[gen], "tt_fmt": ind["fmt"],
                            "width": 2.4 if gen == "Boomer" else 1.8})
@@ -108,10 +190,10 @@ def by_age_chart(ind: dict, ages: list[int], cid: str, y_ticks: list[float], tic
         return "", []
     a0 = min(p[0][0] for p in (s["points"] for s in series))
     a1 = max(p[-1][0] for p in (s["points"] for s in series))
-    a0, a1 = max(15, int(a0) // 5 * 5), min(70, int(a1) // 5 * 5 + 5)
+    a0, a1 = max(0, int(a0) // 5 * 5), min(70, int(a1) // 5 * 5 + 5)
     marks = [{"x0": a - 0.3, "x1": a + 0.3, "color": "--ink-3", "label": f"age {a}", "age": a, "strong": True} for a in ages]
     svg = line_chart(cid, series=series, x_domain=(a0, a1), y_domain=(0, y_ticks[-1]),
-                     x_ticks=[(a, str(a)) for a in range((a0 // 10 + 1) * 10, a1 + 1, 10)],
+                     x_ticks=[(a, "birth" if a == 0 else str(a)) for a in range((a0 + 9) // 10 * 10, a1 + 1, 10)],
                      y_ticks=y_ticks, y_fmt=tick_fmt, x_fmt=lambda x: f"average age {x:.0f}", windows=marks,
                      height=280, aria=f"{ind['title']}, by the age of each generation's average member")
     names = {v: k for k, v in GEN_SHORT.items()}
@@ -166,7 +248,10 @@ def compare_cards(ind: dict, ages: list[int]) -> str:
                 f'<div class="cmp-v">{esc(f.format(v["mean"]))}</div>'
                 f'<div class="cmp-w">{y0}–{y1}{cov}</div>'
                 f'<div class="cmp-r">range {esc(f.format(v["low"]))} – {esc(f.format(v["high"]))}</div>{delta}</div>')
-        blocks.append(f'<div class="cmp" data-age="{age}"><div class="cmp-row">{"".join(cards)}</div></div>')
+        you = (f'<div class="cmp-card you" style="--c:var(--ink)" data-ind="{esc(ind["id"])}" data-age="{age}" hidden>'
+               f'</div>')
+        blocks.append(f'<div class="cmp" data-age="{age}">{conclusion(ind, age)}'
+                      f'<div class="cmp-row">{"".join(cards)}{you}</div></div>')
     return "".join(blocks)
 
 
@@ -224,10 +309,16 @@ def chart_block(spec: dict, inds: dict, ages: list[int], cid: str) -> str:
     srcs = "; ".join(sorted({f'<a href="{esc(s["url"])}">{esc(s["filename"])}</a>'
                              for i in present for s in i.get("sources", []) if s.get("url", "").startswith("http")}))
     latest = f'Latest: <strong>{esc(fmt.format(first["latest"]["value"]))}</strong> ({first["latest"]["year"]}).'
+    blob = ""
+    if compare:
+        data = {"years": compare["years"], "values": compare["values"], "fmt": compare["fmt"]}
+        blob = (f'<script type="application/json" class="ind-data" data-id="{esc(compare["id"])}">'
+                f'{json.dumps(data, separators=(",", ":"))}</script>')
     return f"""
-<section class="chart-block">
+<section class="chart-block">{blob}
   <h3>{esc(spec["head"])}</h3>
   <p class="chart-title">{esc(first["title"])}. {latest}</p>
+  {f'<p class="meaning">{esc(MEANING[first["id"]])}</p>' if first["id"] in MEANING else ""}
   {f'<p>{esc(spec["text"])}</p>' if spec.get("text") else ""}
   {legend}{svg}
   {compare_cards(compare, ages) if compare else ""}
@@ -246,6 +337,9 @@ def topic_page(key: str, hist: dict, extra: str = "") -> str:
   <p class="kicker"><a href="index.html">Boomermeter</a> / {esc(t["title"])}</p>
   <h1>{esc(t["title"])}</h1>
   <p class="hero-lede">{esc(t["lede"])}</p>
+  <div class="you-in"><label>Your birth year <input id="birth-year" type="number" inputmode="numeric"
+  min="1928" max="2026" placeholder="e.g. 2001"></label><span class="caption">We’ll show what you faced at each age,
+  what things looked like the year you were born, and where they are now. Nothing leaves your browser.</span></div>
   {view_picker()}
   {age_picker(ages, default)}
   <p class="caption">Shaded spans mark the years each generation was turning that age (Boomers, born 1946–64, turned 30

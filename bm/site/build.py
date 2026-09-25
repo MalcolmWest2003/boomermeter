@@ -472,7 +472,7 @@ def page(title: str, body: str, description: str, current: str = "index.html") -
     cur = ' aria-current="page"'
     nav = "".join(f'<a href="{href}"{cur if href == current else ""}>{label}</a>' for href, label in NAV)
     return f"""<!doctype html>
-<html lang="en" data-age="30" data-view="age"><head><meta charset="utf-8">
+<html lang="en" data-age="25" data-view="age"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{esc(title)}</title>
 <meta name="description" content="{esc(description)}">

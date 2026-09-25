@@ -125,6 +125,9 @@ def history_inputs():
         "FEDMINNFRWG": s(lambda y: round(0.25 * 1.045 ** (y - 1938), 2) if y < 2009 else 7.25, 1938),
         "B075RC1Q027SBEA": s(lambda y: 10 * 1.05 ** (y - 1947), 1947),
         "A053RC1Q027SBEA": s(lambda y: 28 * 1.068 ** (y - 1947), 1947),
+        "LNS14000012": s(lambda y: 15 + 4 * math.sin(y / 4), 1948),
+        "LNS11300012": s(lambda y: 50 - 0.2 * max(0, y - 1980), 1948),
+        "CUUR0000SEHA": s(lambda y: 20 * 1.045 ** (y - 1914), 1914),
     }
     tuition = {y: 243 * 1.066 ** (y - 1963) for y in range(1963, 2024) if y not in (1964, 1965, 1966, 1967)}
     top = {y: (91.0 if y < 1964 else 70.0 if y < 1982 else 50.0 if y < 1987 else 39.6 if y < 2018 else 37.0)

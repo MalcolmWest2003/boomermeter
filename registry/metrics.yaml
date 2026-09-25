@@ -429,6 +429,51 @@ metrics:
     chart_type: table
     caveat_line: "Other researchers' estimates, reported as published with what each measures."
 
+  - id: hist_teen_unemployment
+    display_name: "Unemployment rate, ages 16 to 19"
+    status_kind: measured
+    source:
+      name: "U.S. Bureau of Labor Statistics, Current Population Survey, via FRED"
+      api: fred.stlouisfed.org
+      endpoint: "graph/fredgraph.csv?id=<series>"
+      series_id: "LNS14000012"
+    update_cadence: "monthly source, annual mean"
+    adjustment_pipeline: [annual_mean]
+    known_confounds:
+      - "Survey estimate; teen samples are small and monthly values are noisy."
+    chart_type: line_with_generation_windows
+    caveat_line: "BLS CPS, ages 16-19, seasonally adjusted."
+
+  - id: hist_teen_participation
+    display_name: "Labor force participation rate, ages 16 to 19"
+    status_kind: measured
+    source:
+      name: "U.S. Bureau of Labor Statistics, Current Population Survey, via FRED"
+      api: fred.stlouisfed.org
+      endpoint: "graph/fredgraph.csv?id=<series>"
+      series_id: "LNS11300012"
+    update_cadence: "monthly source, annual mean"
+    adjustment_pipeline: [annual_mean]
+    known_confounds:
+      - "Falls when more teens stay in school, so a lower rate is not simply worse."
+    chart_type: line_with_generation_windows
+    caveat_line: "BLS CPS, ages 16-19."
+
+  - id: hist_rent_vs_wage
+    display_name: "CPI rent of primary residence over average hourly earnings of production and nonsupervisory workers (1964 = 100)"
+    status_kind: measured
+    source:
+      name: "U.S. Bureau of Labor Statistics (CUUR0000SEHA, AHETPI), via FRED"
+      api: fred.stlouisfed.org
+      endpoint: "graph/fredgraph.csv?id=<series>"
+      series_id: "CUUR0000SEHA, AHETPI"
+    update_cadence: "monthly source, annual mean"
+    adjustment_pipeline: [annual_mean, ratio, rebase_1964]
+    known_confounds:
+      - "The CPI rent index follows existing tenancies and rises more slowly than asking rents for new leases."
+    chart_type: line_with_generation_windows
+    caveat_line: "BLS rent index over BLS hourly earnings, 1964 = 100."
+
   # ---- Handoff: how far the transfer has gone (bm/metrics/handoff.py)
   - id: handoff_wealth_transferred
     display_name: "Share of the Boomer peak share of household net worth that has passed to other generations"
