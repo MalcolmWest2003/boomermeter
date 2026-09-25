@@ -1,0 +1,76 @@
+# Daily: fetch sources, recompute, append to the ledger, rebuild and publish
+# the site. If any source fails, the site still publishes (that section shows
+# its last good data) and the run is then marked failed so GitHub emails you.
+name: update
+
+on:
+  schedule:
+    - cron: "17 13 * * *"   # 13:17 UTC = 6:17 am Pacific (5:17 am in winter)
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths-ignore: ["data/**"]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install -r requirements.txt
+
+      - name: Tests
+        run: python -m pytest -q
+
+      - name: Run pipeline
+        run: python -m bm.run
+
+      - name: Commit data (snapshots, ledger, state)
+        run: |
+          git config user.name "boomermeter-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          if git diff --cached --quiet; then
+            echo "no data changes"
+          else
+            git commit -m "data: $(date -u +%F) run"
+            git push
+          fi
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
+
+      - name: Fail if any source failed
+        run: |
+          python - <<'PY'
+          import json, sys
+          s = json.load(open("data/run_status.json"))
+          for f in s["failures"]:
+              print(f"::error::{f['section']}: {f['error']}")
+              print(f.get("trace", ""))
+          sys.exit(1 if s["failures"] else 0)
+          PY
