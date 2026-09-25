@@ -279,6 +279,7 @@ def wealth_section(state: dict) -> str:
   projections. Source: Federal Reserve Board, Distributional Financial Accounts, generation levels; share = Boomer ÷ all
   generations.</p>
   <div class="lm-detail"><h3>Landmark: under half of household wealth</h3>{lm_text}</div>
+  {same_age_block(w)}
   <div class="smalls">
     {small('equities', 'Stocks & mutual funds', 'c-eq')}
     {small('realestate', 'Real estate (market value)', 'c-re')}
@@ -288,6 +289,48 @@ def wealth_section(state: dict) -> str:
   The Fed revises back data every quarter; changes to numbers we’ve shown are logged as corrections.</p>
   {stale_note(sec)}
 </section>"""
+
+
+def same_age_block(w: dict) -> str:
+    sa = w.get("same_age")
+    if not sa:
+        return ""
+    age = sa["age"]
+
+    def cards(col):
+        out = []
+        ref = sa["by_column"].get(col, {}).get("Boomer", {}).get("mean")
+        for gen, v in sa["by_column"].get(col, {}).items():
+            delta = ""
+            if gen != "Boomer" and ref:
+                delta = f'<div class="cmp-d">{v["mean"] - ref:+.1f} pts vs Boomers</div>'
+            part = "" if v["complete"] else f'<span class="sofar">{v["quarters"]} quarters of data</span>'
+            out.append(f'<div class="cmp-card" style="--c:var({topics.GEN_VARS[gen]})"><div class="cmp-g">{esc(gen)}</div>'
+                       f'<div class="cmp-v">{v["mean"]:.1f}%</div>'
+                       f'<div class="cmp-w">{v["from"][:4]}–{v["to"][:4]} {part}</div>'
+                       f'<div class="cmp-r">range {v["low"]:.1f}% – {v["high"]:.1f}%</div>{delta}</div>')
+        return f'<div class="cmp-row">{"".join(out)}</div>'
+
+    nw = sa["by_column"].get("networth", {})
+    lead = ""
+    if "Boomer" in nw and "Millennial" in nw:
+        lead = (f'<p class="lede">When the average Boomer was {age}, Boomer households held '
+                f'<strong>{nw["Boomer"]["mean"]:.1f}%</strong> of US household net worth. At the same age, Millennial '
+                f'households hold <strong>{nw["Millennial"]["mean"]:.1f}%</strong>.</p>')
+    return f"""
+  <h3 id="same-age">At the same age</h3>
+  {lead}
+  <p class="chart-title">Share of US household net worth, when each generation’s average member was {age}</p>
+  {cards("networth")}
+  <p class="chart-title" style="margin-top:18px">Share of household real estate (market value), same point in life</p>
+  {cards("realestate")}
+  <p class="caption">“Average member was {age}” means the year the generation’s middle birth year turned {age} (Boomers
+  1990, Gen X 2007, Millennials 2023); each figure averages the quarters within {sa["half_width"]} years of it, and its
+  range is the lowest and highest quarter. The Fed’s series starts in late 1989, so the Boomer figure covers only the
+  later part of its window. Households count by the generation of their head: young adults living with parents count
+  in their parents’ household, which lowers the share of any young generation, and more young adults live with their
+  parents now than in the 1980s. Stocks are left out of this comparison because the Fed’s estimates of young
+  households’ stock holdings are too noisy in the early years.</p>"""
 
 
 def congress_section(state: dict) -> str:

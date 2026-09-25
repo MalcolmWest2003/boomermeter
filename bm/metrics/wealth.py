@@ -28,6 +28,39 @@ def shares(parsed: dict) -> dict[str, dict]:
     return out
 
 
+# DFA generation labels -> birth years (Pew), for "when the average member was A".
+DFA_BIRTH_YEARS = {"Silent": (1928, 1945), "BabyBoom": (1946, 1964), "GenX": (1965, 1980),
+                   "Millennial": (1981, 1996)}
+DFA_DISPLAY = {"Silent": "Silent", "BabyBoom": "Boomer", "GenX": "Gen X", "Millennial": "Millennial"}
+SAME_AGE = 35
+SAME_AGE_HALF_WIDTH = 2  # years either side of the year the average member turned SAME_AGE
+
+
+def same_age(sh: dict, age: int = SAME_AGE) -> dict[str, dict]:
+    """Each generation's own share when its average member (middle birth year)
+    was `age`: mean over the quarters within +/-2 years of that point, with the
+    min-max as the range. Needs at least 4 quarters of data."""
+    out = {}
+    # Equities are left out: the DFA's equity holdings for young households are
+    # too noisy early on (Boomer holdings quadruple within a year around 1990).
+    for col, d in ((c, sh[c]) for c in ("networth", "realestate") if c in sh):
+        res = {}
+        for label, (b0, b1) in DFA_BIRTH_YEARS.items():
+            series = d["by_generation"].get(label, {})
+            mid = (b0 + b1) / 2 + age
+            vals = [(q, v) for q, v in series.items() if abs(stats.year_frac(q) - mid) <= SAME_AGE_HALF_WIDTH]
+            if len(vals) < 4:
+                continue
+            xs = [v for _, v in vals]
+            res[DFA_DISPLAY[label]] = {
+                "mean": sum(xs) / len(xs), "low": min(xs), "high": max(xs),
+                "centre_year": mid, "from": min(q for q, _ in vals).isoformat(),
+                "to": max(q for q, _ in vals).isoformat(), "quarters": len(vals),
+                "complete": len(vals) >= 4 * 2 * SAME_AGE_HALF_WIDTH}
+        out[col] = res
+    return out
+
+
 def compute(parsed: dict, prov: list[dict], today: dt.date, reg: dict) -> tuple[list[Entry], dict]:
     sh = shares(parsed)
     entries, site = [], {"sources": prov, "series": {}}
@@ -65,4 +98,14 @@ def compute(parsed: dict, prov: list[dict], today: dt.date, reg: dict) -> tuple[
                              display_range=landmarks.range_label(lm),
                              method=["linear_trend_multiwindow"], sources=prov))
     site["landmark_under_half"] = lm
+
+    sa = same_age(sh)
+    site["same_age"] = {"age": SAME_AGE, "half_width": SAME_AGE_HALF_WIDTH, "by_column": sa}
+    for col, res in sa.items():
+        for gen, v in res.items():
+            entries.append(Entry(f"wealth_same_age_{col}@{gen}@{SAME_AGE}", round(v["mean"], 1), f"{v['mean']:.1f}%",
+                                 "measured", v["to"], "percent", low=round(v["low"], 1), high=round(v["high"], 1),
+                                 display_range=f"{v['low']:.1f}–{v['high']:.1f}%",
+                                 method=["share_from_levels", "mean_over_quarters_near_average_age"], sources=prov,
+                                 notes=f"{gen} when average member was {SAME_AGE}: {v['from']} to {v['to']}"))
     return entries, site

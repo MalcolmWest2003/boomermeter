@@ -97,6 +97,16 @@ What to know:
 - **Revisions.** The Fed revises back data every quarter. When a quarter we've already displayed changes, the old and
   new values go on the corrections list.
 
+**At the same age.** Each generation's own share of net worth (and of real estate) when its average member was 35,
+meaning the year its middle birth year turned 35: Boomers 1990, Gen X 2007.5, Millennials 2023.5. The figure is the
+mean of the quarterly shares within two years either side, and the range is the lowest and highest quarter. This
+differs from the window method on the other topic pages because the DFA starts in 1989 Q3, when Boomers averaged
+about 34; a window average would compare Boomers at older ages than Millennials. Two biases to keep in mind: the
+Boomer figure uses only the 10 quarters from 1989 Q3, and head-of-household assignment lowers every young
+generation's share (young adults living with parents count in their parents' household), more so recently. Stocks are
+left out of this comparison: the DFA's estimates of young households' stock holdings are too noisy in the early
+years (Boomer holdings roughly quadruple within a year around 1990).
+
 ## Congress
 
 **Source:** [unitedstates/congress-legislators](https://github.com/unitedstates/congress-legislators), a

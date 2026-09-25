@@ -121,6 +121,38 @@ metrics:
     chart_type: line
     caveat_line: "Fed DFA. Households assigned by the generation of the household head."
 
+  - id: wealth_same_age_networth
+    display_name: "Each generation's share of US household net worth when its average member was 35"
+    status_kind: measured
+    source:
+      name: Federal Reserve Board, Distributional Financial Accounts (DFA)
+      api: federalreserve.gov flat file
+      endpoint: dfa.zip → dfa-generation-levels.csv
+      series_id: Net worth by generation; share of the sum of generations
+    update_cadence: quarterly
+    adjustment_pipeline: [share_from_levels, mean_over_quarters_within_2_years_of_average_age_35]
+    known_confounds:
+      - "Households are assigned to the generation of the household head; young adults living with their parents count in their parents' household, which lowers young generations' share, and more so for Millennials."
+      - "DFA starts in 1989 Q3, when Boomers averaged about 34, so the Boomer window is partly observed."
+    chart_type: cards
+    caveat_line: "Fed DFA. Share of household net worth when the generation's middle birth year turned 35 (±2 years)."
+
+  - id: wealth_same_age_realestate
+    display_name: "Each generation's share of household real estate when its average member was 35"
+    status_kind: measured
+    source:
+      name: Federal Reserve Board, Distributional Financial Accounts (DFA)
+      api: federalreserve.gov flat file
+      endpoint: dfa.zip → dfa-generation-levels.csv
+      series_id: Real estate by generation (market value); share of the sum of generations
+    update_cadence: quarterly
+    adjustment_pipeline: [share_from_levels, mean_over_quarters_within_2_years_of_average_age_35]
+    known_confounds:
+      - "Gross market value, before mortgages."
+      - "Households are assigned to the generation of the household head."
+    chart_type: cards
+    caveat_line: "Fed DFA. Share of household real estate when the generation's middle birth year turned 35 (±2 years)."
+
   - id: wealth_share_equities
     display_name: Boomer-headed households' share of corporate equities & mutual funds
     status_kind: measured
