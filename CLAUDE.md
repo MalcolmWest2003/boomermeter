@@ -41,6 +41,16 @@ scope** until the site is robust.
   not. Keep both halves on the page.
 - **DFA group labels:** the Fed's groups are "Silent and earlier" (born before 1946) and "Millennial" (1981 or later,
   includes Gen Z). Label them that way wherever DFA numbers appear.
+- **Look and voice (Sept 2026):** the owner found the first design obviously AI-made (cream + clay orange + IBM
+  Plex + rounded cards + hedged captions). House style now: white paper, black ink, one red (--accent); Archivo
+  condensed for headlines and numbers, Source Serif for text; hard black rules instead of cards; no monospace. Copy is
+  plain and short, second person where natural, no em dashes, conclusions stated outright; caveats go in "fine print"
+  details, not the main text. Write for a smart 20-year-old who doesn't read statistics.
+- **Site prose lives in `copy/site.yaml`** so the owner can rewrite it without code. `{placeholders}` are filled
+  from data. Put new static prose there, not in Python.
+- **Gen Z is included everywhere the data allows** (owner is Gen Z). Ages 18/21/25/30/35/40 in the picker (default
+  25); by-age lines start at birth; the birth-year box personalizes every chart ("the year you were born", "now").
+  Where a source lumps Gen Z in (the Fed's "Millennial" group), say so.
 - **Charts have a by-age view** (one line per generation, x = age of the middle birth year) next to the by-year view.
 - **Published estimates, not our own, where no official statistic exists** (e.g. billionaire tax rates):
   `registry/literature.yaml`, each with what it measures and the critique beside it.
@@ -60,6 +70,7 @@ bm/metrics/*.py       headcount (meter), congress, wealth, history (generations 
                       handoff (transfer bars, wealth vs population; derived from the other sections)
 bm/site/              static site builder (build.py pages, topics.py topic pages, handoff_views.py bars and
                       generation charts), SVG charts, CSS, JS
+copy/site.yaml        the site's words (headlines, ledes, chart heads, plain-language meanings)
 bm/probe.py           prints what sources return; run on GitHub runners by .github/workflows/probe.yml
 registry/literature.yaml  published estimates shown on the taxes page
 bm/run.py             orchestrator; each source isolated; failures -> run_status.json

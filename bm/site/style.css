@@ -242,3 +242,13 @@ footer { border-top: 6px solid var(--rule); padding: 20px 16px 40px; font: 600 1
 .methods h2 { margin-top: 44px; padding-top: 22px; border-top: 3px solid var(--rule); font-size: 30px; }
 .methods p, .methods li { color: var(--ink-2); }
 .methods table { margin: 12px 0; }
+
+/* phones: SVG text is in chart units, so a 720-wide chart at 360px halves it; double it back */
+@media (max-width: 600px) {
+  svg .tick, svg .reflabel, svg .dlabel { font-size: 22px; }
+  svg .gwlabel { font-size: 18px; }
+  svg .line, svg .ref, svg .axis, svg .grid { vector-effect: non-scaling-stroke; }
+  svg .line { stroke-width: 2px !important; }
+  .chart-block h3 { font-size: 24px; }
+  .hb-pct { font-size: 40px; }
+}

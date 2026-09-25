@@ -166,7 +166,7 @@ household net worth divided by its adults.
 
 Most charts can be shown **by year** or **by age**. In the by-age view each line follows one generation: the value in
 the year its middle birth year reached each age (Boomers: 1955 + age). Reading straight up from an age compares
-generations at the same point in life. Lines for the topic pages run from 15 to 70; the wealth and Congress charts use
+generations at the same point in life. Lines for the topic pages run from birth to 70, so the youngest generations appear too; the wealth and Congress charts use
 the full range of the data.
 
 ## Then and now: generations at the same age
@@ -174,6 +174,10 @@ the full range of the data.
 The housing, work, college and taxes pages compare what each generation faced **at the same age**, because a
 comparison between "the 1970s" and "today" silently compares people at different points in life.
 
+- **Ages.** 18, 21, 25, 30, 35 and 40, so Gen Z (born 1997–2012) appears wherever at least three of its years are
+  observed.
+- **Your birth year.** The box on each topic page is computed in your browser from the same series; the year is kept
+  only in your browser's local storage.
 - **Windows.** For an age A, a generation's window is the calendar years in which its birth years turned A. Boomers
   (born 1946–1964) turned 30 in 1976–1994; Millennials (1981–1996) turn 30 in 2011–2026. The Silent Generation is
   taken as born 1928–1945 (Pew) so its window is closed.
@@ -196,6 +200,8 @@ comparison between "the 1970s" and "today" silently compares people at different
 | Productivity and pay | BLS output per hour and real hourly compensation, nonfarm business (both 1948 = 100); BLS average hourly earnings of production and nonsupervisory workers, CPI-U deflated, spliced to the compensation index at 1964 | The two pay lines bracket the measurement debate: compensation includes benefits and all earners and uses BLS's output deflator; the wage line excludes benefits and supervisors and uses CPI-U |
 | Labor's share | BEA compensation of employees, % of gross domestic income | Proprietors' income, part of which is labor income, is excluded |
 | Profits' share | BEA corporate profits after tax (without IVA and CCAdj) over GDP | Book profits |
+| Teen unemployment; teens in the labor force | BLS Current Population Survey, ages 16-19, seasonally adjusted (LNS14000012, LNS11300012) | Participation falls when more teens stay in school, so lower is not simply worse |
+| Rent against pay | BLS CPI rent of primary residence (CUUR0000SEHA) over BLS average hourly earnings of production and nonsupervisory workers (AHETPI), 1964 = 100 | The CPI rent index follows existing tenancies and rises more slowly than asking rents on new leases |
 | Real minimum wage | Federal minimum (Department of Labor), CPI-U deflated | Many states and cities set higher minimums |
 | Tuition in minimum-wage hours; real tuition | NCES Digest table 330.10, in-state tuition and required fees at public 4-year institutions (newest Digest edition), over the federal minimum wage | Sticker price before grants; the academic year is keyed to the calendar year it starts in |
 | Corporate tax take | BEA federal taxes on corporate income over corporate profits before tax | Book profits, all corporations; excludes state taxes |
