@@ -135,10 +135,31 @@ def run(demo: bool = False, congress_dir: Path | None = None) -> dict:
                     top_rate = vals
         return history_m.compute(history_m.build(annual, tuition, top_rate), prov, today)
 
+    def do_literature():
+        import re
+
+        import yaml
+
+        from .ledger import Entry
+        lit = yaml.safe_load((config.ROOT / "registry" / "literature.yaml").read_text())
+        entries = []
+        for group, items in lit.items():
+            for n, e in enumerate(items):
+                missing = [k for k in ("value", "group", "period", "measure", "source", "url") if not e.get(k)]
+                if missing:
+                    raise ValueError(f"literature {group}[{n}] missing {missing}")
+                num = float(re.sub(r"[^0-9.]", "", e["value"]))
+                entries.append(Entry(f"lit_published_tax_estimates@{group}@{n}", num, e["value"], "measured",
+                                     str(e["period"])[:4] + "-12-31", "percent", method=["as_published"],
+                                     sources=[{"url": e["url"], "filename": e["source"]}],
+                                     notes=f'{e["group"]}, {e["period"]}'))
+        return entries, lit
+
     section("congress", do_congress)
     section("headcount", do_headcount)
     section("wealth", do_wealth)
     section("history", do_history)
+    section("literature", do_literature)
     state["corrections"] = ledger.corrections()
     state["failures"] = [{k: v for k, v in f.items() if k != "trace"} for f in failures]
     site_build.build(state)

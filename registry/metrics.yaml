@@ -170,6 +170,22 @@ metrics:
     chart_type: line_with_generation_windows
     caveat_line: "Census price and income data. New houses only."
 
+  - id: hist_down_payment_months
+    display_name: "A 20% down payment on the median new home, in months of median family income"
+    status_kind: measured
+    source:
+      name: "U.S. Census Bureau & HUD (MSPUS); U.S. Census Bureau CPS (MEFAINUSA646N), via FRED"
+      api: fred.stlouisfed.org
+      endpoint: "graph/fredgraph.csv?id=<series>"
+      series_id: "MSPUS, MEFAINUSA646N"
+    update_cadence: "annual"
+    adjustment_pipeline: [annual_mean_of_quarters, ratio, times_2.4]
+    known_confounds:
+      - "Pre-tax income with nothing else spent; real saving time is several times longer."
+      - "New-house prices exceed existing-house prices."
+    chart_type: line_with_generation_windows
+    caveat_line: "Computed: 20% of the median new-house price over monthly family income."
+
   - id: hist_mortgage_payment_share
     display_name: "Mortgage payment on the median new home, % of median family income"
     status_kind: measured
@@ -366,6 +382,20 @@ metrics:
       - "Statutory rate on the top bracket; effective rates at the top are lower."
     chart_type: line_with_generation_windows
     caveat_line: "IRS SOI table 23."
+  - id: lit_published_tax_estimates
+    display_name: "Published estimates of tax rates paid by the richest households and largest corporations"
+    status_kind: measured
+    source:
+      name: "Published research, curated in registry/literature.yaml (each entry names its study)"
+      api: n/a
+      endpoint: registry/literature.yaml
+      series_id: "top_tax_estimates, corporate_estimates"
+    update_cadence: "manual, when new studies appear"
+    adjustment_pipeline: [as_published]
+    known_confounds:
+      - "The estimates measure different things (which taxes, which income concept) and are not directly comparable."
+    chart_type: table
+    caveat_line: "Other researchers' estimates, reported as published with what each measures."
 
 landmarks:
 

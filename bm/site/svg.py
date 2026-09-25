@@ -30,10 +30,12 @@ def _path(pts, sx, sy):
 
 def line_chart(cid: str, *, series=(), bands=(), x_domain, y_domain, x_ticks, y_ticks,
                y_fmt="{:.0f}", x_fmt=None, hrefs=(), vrefs=(), labels=(), height=H,
-               aria="") -> str:
+               aria="", windows=()) -> str:
     """series: [{name, points:[(x,y)], color, dash?, width?, tt_fmt?}]
     bands: [{lower:[(x,y)], upper:[(x,y)], color, name}]
-    hrefs/vrefs: [{at, label, color?}]  labels: [{x, y, text, anchor?, color?}]"""
+    hrefs/vrefs: [{at, label, color?}]  labels: [{x, y, text, anchor?, color?}]
+    windows: [{x0, x1, color, label, age}] shaded spans (generation-at-age
+    windows); each carries data-age so CSS shows only the selected age."""
     w, h = W, height
     sx = Scale(*x_domain, M["l"], w - M["r"])
     sy = Scale(*y_domain, h - M["b"], M["t"])
@@ -49,6 +51,14 @@ def line_chart(cid: str, *, series=(), bands=(), x_domain, y_domain, x_ticks, y_
         out.append(f'<line class="axis" x1="{x:.1f}" x2="{x:.1f}" y1="{h - M["b"]}" y2="{h - M["b"] + 5}"/>')
         out.append(f'<text class="tick" x="{x:.1f}" y="{h - M["b"] + 19}" text-anchor="middle">{esc(lab)}</text>')
     out.append(f'<line class="axis" x1="{M["l"]}" x2="{w - M["r"]}" y1="{h - M["b"]}" y2="{h - M["b"]}"/>')
+    for wd in windows:
+        x0, x1 = max(wd["x0"], x_domain[0]), min(wd["x1"], x_domain[1])
+        if x1 <= x0:
+            continue
+        out.append(f'<g class="gw" data-age="{wd["age"]}"><rect x="{sx(x0):.1f}" y="{M["t"]}" '
+                   f'width="{sx(x1) - sx(x0):.1f}" height="{h - M["t"] - M["b"]}" style="fill:var({wd["color"]})"/>'
+                   f'<text class="gwlabel" x="{sx(x0) + 4:.1f}" y="{M["t"] + 12}" style="fill:var({wd["color"]})">'
+                   f'{esc(wd["label"])}</text></g>')
     for b in bands:
         pts = [(x, y) for x, y in b["upper"]] + [(x, y) for x, y in reversed(b["lower"])]
         d = _path(pts, sx, sy) + " Z"

@@ -96,6 +96,13 @@ def build(a: dict[str, dict[int, float]], tuition: dict[int, float] | None,
         inputs=["MSPUS", "MEFAINUSA646N"],
         note="Median sales price of new houses sold (Census/HUD) over median family income (Census CPS). "
              "New-house prices run above existing-house prices, so the level is high; the change over time is the point.")
+    p2i = _ratio(a["MSPUS"], a["MEFAINUSA646N"])
+    add(id="hist_down_payment_months", topic="housing",
+        title="A 20% down payment on the median new home, in months of median family income",
+        short="Down payment", unit="months", fmt="{:.1f} mo", worse="higher",
+        series={y: 12 * 0.20 * r for y, r in p2i.items()}, inputs=["MSPUS", "MEFAINUSA646N"],
+        note="20% of the median new-house price over one month of median family income, before taxes and "
+             "with nothing spent. The saving hurdle before the first payment; low rates do not shrink it.")
     pay = {}
     for y, rate in a["MORTGAGE30US"].items():
         if y in a["MSPUS"] and y in a["MEFAINUSA646N"]:

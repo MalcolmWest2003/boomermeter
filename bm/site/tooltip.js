@@ -40,3 +40,21 @@
     hit.addEventListener("touchend", leave);
   });
 })();
+
+// Age picker: one choice per visitor, applied on every page.
+(function () {
+  var root = document.documentElement, KEY = "bm-age";
+  function set(age) {
+    root.dataset.age = age;
+    document.querySelectorAll(".agepick button").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.age === age));
+    });
+    try { localStorage.setItem(KEY, age); } catch (e) {}
+  }
+  var saved = null;
+  try { saved = localStorage.getItem(KEY); } catch (e) {}
+  if (saved && /^(25|30|35|40)$/.test(saved)) set(saved);
+  document.querySelectorAll(".agepick button").forEach(function (b) {
+    b.addEventListener("click", function () { set(b.dataset.age); });
+  });
+})();

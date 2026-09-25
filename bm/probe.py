@@ -121,6 +121,8 @@ def show_history() -> None:
     print("tuition", {y: tuition[y] for y in sorted(tuition)[:3] + sorted(tuition)[-3:]})
     print("top rate", {y: top[y] for y in (1950, 1964, 1981, 1987, 1993, 2013, 2018, max(top))})
     _, site = h.compute(h.build(annual, tuition, top), prov, dt.date.today())
+    import json
+    print("HISTORY_JSON " + json.dumps(site, separators=(",", ":"), default=str))
     for ind in site["indicators"]:
         f = ind["fmt"]
         ys = dict(zip(ind["years"], ind["values"]))

@@ -1,0 +1,63 @@
+# Published estimates shown on the taxes page. These are other researchers'
+# numbers, reported with what each measures; the site computes none of them.
+# Every entry needs: value, group, period, measure, source, url. Keep the
+# critiques next to the estimates they dispute.
+
+top_tax_estimates:
+
+  - value: "24%"
+    group: Top 400 US taxpayers by wealth (top 0.0002%)
+    period: 2018–2020
+    measure: >-
+      All taxes (federal, state, local; income, payroll, corporate, estate) as a share of pre-tax economic income.
+      The same study puts the full population at 30%.
+    source: Balkir, Saez, Yagan & Zucman, "How Much Tax Do US Billionaires Pay?", NBER Working Paper 34170 (2025)
+    url: https://www.nber.org/papers/w34170
+
+  - value: "38%"
+    group: Same group, same years
+    period: 2018–2020
+    measure: >-
+      The same total-tax rate after adjusting for family wealth spread across several tax returns, double-counted
+      income and taxes the first study leaves out.
+    source: David Splinter, "Comment on 'How Much Tax Do Billionaires Pay?'" (2025)
+    url: https://www.davidsplinter.com/BillionaireTaxRate.pdf
+    note: Splinter is an economist at Congress's Joint Committee on Taxation; this is his comment, not a JCT estimate.
+
+  - value: "23%"
+    group: 400 richest US households
+    period: "2018 (vs. about 70% in 1950 on the same method)"
+    measure: All taxes as a share of pre-tax income, in a long series back to 1913.
+    source: Saez & Zucman, The Triumph of Injustice (W. W. Norton, 2019)
+    url: https://itep.org/emmanuel-saez-and-gabriel-zucmans-new-book-reminds-us-that-tax-injustice-is-a-choice/
+    note: >-
+      Disputed by Auten & Splinter, whose treatment of untaxed income puts the 2014 rate for the top 0.01% nearly
+      20 points higher than Saez & Zucman's.
+
+  - value: "8.2%"
+    range: "6% to 12% given data limits"
+    group: 400 wealthiest families (Forbes 400)
+    period: 2010–2018
+    measure: >-
+      Federal individual income tax only, as a share of income that includes gains on assets not yet sold.
+    source: White House Council of Economic Advisers and OMB, "What Is the Average Federal Individual Income Tax Rate on the Wealthiest Americans?" (2021)
+    url: https://bidenwhitehouse.archives.gov/cea/blog/2021/09/23/what-is-the-average-federal-individual-income-tax-rate-on-the-wealthiest-americans
+    note: Counting unrealized gains as income, and counting income tax only, are the contested choices; the Tax Foundation published a critique.
+
+  - value: "3.4%"
+    group: 25 richest Americans
+    period: 2014–2018
+    measure: >-
+      Federal income tax paid over the growth in their wealth (Forbes estimates). Not a tax rate on income; a ratio
+      of tax paid to wealth gained.
+    source: ProPublica, "The Secret IRS Files" (2021)
+    url: https://www.propublica.org/article/the-secret-irs-files-trove-of-never-before-seen-records-reveal-how-the-wealthiest-avoid-income-tax
+
+corporate_estimates:
+
+  - value: "14.1%"
+    group: 342 consistently profitable large US corporations
+    period: 2018–2022
+    measure: Federal corporate income tax paid over pre-tax US profits reported to shareholders; statutory rate 21%.
+    source: Institute on Taxation and Economic Policy, "Corporate Tax Avoidance in the First Five Years of the Trump Tax Law" (2024)
+    url: https://itep.org/corporate-tax-avoidance-trump-tax-law/

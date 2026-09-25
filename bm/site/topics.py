@@ -1,0 +1,248 @@
+"""Topic pages built from the history indicators (bm/metrics/history.py):
+what each generation faced at the same age, with sources and caveats."""
+from __future__ import annotations
+
+from .svg import esc, line_chart
+
+GEN_VARS = {"Silent": "--gen-silent", "Boomer": "--gen-boomer", "Gen X": "--gen-x",
+            "Millennial": "--gen-millennial", "Gen Z": "--gen-z"}
+GEN_PLURAL = {"Silent": "the Silent Generation", "Boomer": "Boomers", "Gen X": "Gen X",
+              "Millennial": "Millennials", "Gen Z": "Gen Z"}
+
+# Page structure. Each chart lists indicator ids drawn together; "compare" is
+# the indicator whose generation-at-age values are shown under the chart.
+TOPICS = {
+    "housing": {
+        "title": "Housing",
+        "lede": "What a first home cost, measured against what a family earned, at the age people usually buy one.",
+        "charts": [
+            {"ids": ["hist_price_to_income"], "compare": "hist_price_to_income",
+             "head": "Home prices against family income"},
+            {"ids": ["hist_down_payment_months"], "compare": "hist_down_payment_months",
+             "head": "Saving for the down payment",
+             "text": "The price hurdle shows up first as the down payment: money that has to be saved before the "
+                     "first mortgage payment, and that low interest rates do nothing to shrink."},
+            {"ids": ["hist_mortgage_payment_share"], "compare": "hist_mortgage_payment_share",
+             "head": "The monthly payment, prices and rates together",
+             "text": "Here the comparison turns. Mortgage rates reached 18% in 1981, so the monthly payment on the "
+                     "median home took a larger share of family income when Boomers were 30 than it has for "
+                     "Millennials, even though prices are higher now. Boomers’ housing burden was the payment; "
+                     "Millennials’ is the price and the down payment. Rates rose again from 2022, and the share has "
+                     "climbed since."},
+            {"ids": ["hist_mortgage_rate", "hist_fed_funds"], "compare": "hist_mortgage_rate",
+             "head": "Interest rates",
+             "text": "High rates hurt buyers and helped savers; the four-decade fall in rates after 1981 raised the "
+                     "price of every house, stock and bond that was already owned. People who bought before the fall "
+                     "were paid by it."},
+        ],
+    },
+    "work": {
+        "title": "Work and pay",
+        "lede": "How the income the economy produces has been split between the people who work and the people who own.",
+        "charts": [
+            {"ids": ["hist_productivity_index", "hist_real_comp_index", "hist_real_wage_index"], "compare": None,
+             "head": "Productivity and pay",
+             "text": "Economists disagree about how big the gap between productivity and pay is, and the disagreement is "
+                     "mostly about measurement: whether to count benefits, whether to include executives, and which "
+                     "price index to use. The two pay lines are the two ends of that argument. The gap exists on both."},
+            {"ids": ["hist_labor_share"], "compare": "hist_labor_share", "head": "Labor's share of income"},
+            {"ids": ["hist_profit_share"], "compare": "hist_profit_share", "head": "Corporate profits' share"},
+            {"ids": ["hist_real_min_wage"], "compare": "hist_real_min_wage", "head": "The minimum wage"},
+        ],
+    },
+    "college": {
+        "title": "College",
+        "lede": "The price of a public four-year college, counted in hours of minimum-wage work.",
+        "charts": [
+            {"ids": ["hist_tuition_hours_min_wage"], "compare": "hist_tuition_hours_min_wage",
+             "head": "A year of tuition, in minimum-wage hours",
+             "text": "This is the sticker price. Grants and tuition discounts mean the average student pays less, and "
+                     "the gap between sticker and net price has grown. The College Board’s Trends in College Pricing "
+                     "tracks net price, but not back to the 1960s, so the long comparison has to use sticker price."},
+            {"ids": ["hist_tuition_real"], "compare": "hist_tuition_real", "head": "Tuition in today’s dollars"},
+        ],
+    },
+    "taxes": {
+        "title": "Taxes at the top",
+        "lede": "What the highest earners and the largest companies are asked to pay, and what they actually pay.",
+        "charts": [
+            {"ids": ["hist_top_income_tax_rate"], "compare": "hist_top_income_tax_rate",
+             "head": "The top income tax bracket",
+             "text": "The statutory top rate was above 90% through the 1950s, but almost no one paid it: the bracket "
+                     "started at incomes equal to several million of today’s dollars, and deductions and shelters "
+                     "were widespread. What people at the top actually pay is the harder question, below."},
+            {"ids": ["hist_corp_effective_tax"], "compare": "hist_corp_effective_tax",
+             "head": "What corporations pay on their profits"},
+        ],
+    },
+}
+ORDER = ["housing", "work", "college", "taxes"]
+
+
+def _ind_map(hist: dict) -> dict:
+    return {i["id"]: i for i in hist.get("indicators", [])}
+
+
+def age_picker(ages: list[int], default: int) -> str:
+    btns = "".join(f'<button type="button" data-age="{a}" aria-pressed="{str(a == default).lower()}">{a}</button>'
+                   for a in ages)
+    return (f'<div class="agepick" role="group" aria-label="Compare generations at age">'
+            f'<span>Compare generations at age</span>{btns}</div>')
+
+
+def _delta(ind: dict, v: float, ref: float) -> str:
+    """Change relative to Boomers at the same age, in the indicator's own terms."""
+    if ind["unit"] == "pct":
+        d = v - ref
+        return f"{d:+.1f} pts vs Boomers" if abs(d) >= 0.05 else "same as Boomers"
+    if ref:
+        r = v / ref
+        return f"{r:.2f}× Boomers" if abs(r - 1) >= 0.005 else "same as Boomers"
+    return ""
+
+
+def compare_cards(ind: dict, ages: list[int]) -> str:
+    f = ind["fmt"]
+    this_year = ind["latest"]["year"] + 1
+    blocks = []
+    for age in ages:
+        gens = ind["at_age"].get(str(age), {})
+        if not gens:
+            blocks.append(f'<div class="cmp" data-age="{age}"><p class="caption">No generation has at least three '
+                          f'observed years at age {age} in this series.</p></div>')
+            continue
+        ref = gens.get("Boomer", {}).get("mean")
+        cards = []
+        for gen, v in gens.items():
+            y0, y1 = v["window"]
+            span = y1 - y0 + 1
+            cov = ("" if v["complete"] else
+                   f' <span class="sofar">so far: {v["observed"]} of {span} years</span>' if y1 >= this_year else
+                   f' <span class="sofar">data for {v["observed"]} of {span} years</span>')
+            delta = "" if gen == "Boomer" or ref is None else f'<div class="cmp-d">{esc(_delta(ind, v["mean"], ref))}</div>'
+            cards.append(
+                f'<div class="cmp-card" style="--c:var({GEN_VARS[gen]})">'
+                f'<div class="cmp-g">{esc(gen)}</div>'
+                f'<div class="cmp-v">{esc(f.format(v["mean"]))}</div>'
+                f'<div class="cmp-w">{y0}–{y1}{cov}</div>'
+                f'<div class="cmp-r">range {esc(f.format(v["low"]))} – {esc(f.format(v["high"]))}</div>{delta}</div>')
+        blocks.append(f'<div class="cmp" data-age="{age}"><div class="cmp-row">{"".join(cards)}</div></div>')
+    return "".join(blocks)
+
+
+def _windows(ind: dict, ages: list[int]) -> list[dict]:
+    out = []
+    for age in ages:
+        for gen, v in ind["at_age"].get(str(age), {}).items():
+            out.append({"x0": v["window"][0], "x1": v["window"][1] + 1, "color": GEN_VARS[gen],
+                        "label": f"{GEN_PLURAL[gen]} at {age}", "age": age})
+    return out
+
+
+def _nice_ticks(hi: float) -> list[float]:
+    for step in (0.5, 1, 2, 2.5, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000):
+        if hi / step <= 6:
+            return [i * step for i in range(int(hi // step) + 2)]
+    return [0, hi]
+
+
+SERIES_COLORS = ["--ink", "--series-age", "--accent", "--ink-3"]
+
+
+def chart_block(spec: dict, inds: dict, ages: list[int], cid: str) -> str:
+    present = [inds[i] for i in spec["ids"] if i in inds]
+    if not present:
+        return ""
+    first = present[0]
+    x0 = min(i["years"][0] for i in present)
+    x1 = max(i["years"][-1] for i in present) + 1
+    ymax = max(max(i["values"]) for i in present)
+    y_ticks = _nice_ticks(ymax * 1.05)
+    y_ticks = [t for t in y_ticks if t <= y_ticks[-1]]
+    fmt = first["fmt"]
+    tick_fmt = fmt.replace(".1f", ".0f").replace(".2f", ".0f").replace(",.0f", ",.0f")
+    series = [{"name": i["short"], "points": [(y + 0.5, v) for y, v in zip(i["years"], i["values"])],
+               "color": SERIES_COLORS[k % len(SERIES_COLORS)], "tt_fmt": i["fmt"],
+               "width": 2.2 if k == 0 else 1.8, "dash": k == 2}
+              for k, i in enumerate(present)]
+    compare = inds.get(spec.get("compare") or "")
+    svg = line_chart(cid, series=series, x_domain=(x0, x1), y_domain=(0, y_ticks[-1]),
+                     x_ticks=[(y, str(y)) for y in range((x0 // 10 + 1) * 10, x1 + 1, 10)],
+                     y_ticks=y_ticks, y_fmt=tick_fmt, x_fmt=lambda x: str(int(x)),
+                     windows=_windows(compare, ages) if compare else (), height=280, aria=first["title"])
+    legend = ""
+    if len(present) > 1:
+        legend = '<div class="legend">' + "".join(
+            f'<span class="lg"><i style="background:var({s["color"]})"></i>{esc(i["title"])}</span>'
+            for s, i in zip(series, present)) + "</div>"
+    notes = "".join(f"<li>{esc(i['note'])}</li>" for i in present)
+    srcs = "; ".join(sorted({f'<a href="{esc(s["url"])}">{esc(s["filename"])}</a>'
+                             for i in present for s in i.get("sources", []) if s.get("url", "").startswith("http")}))
+    latest = f'Latest: <strong>{esc(fmt.format(first["latest"]["value"]))}</strong> ({first["latest"]["year"]}).'
+    return f"""
+<section class="chart-block">
+  <h3>{esc(spec["head"])}</h3>
+  <p class="chart-title">{esc(first["title"])}. {latest}</p>
+  {f'<p>{esc(spec["text"])}</p>' if spec.get("text") else ""}
+  {legend}{svg}
+  {compare_cards(compare, ages) if compare else ""}
+  <details><summary>What this measures, and its limits</summary><ul>{notes}</ul>
+  <p class="caption">Source files: {srcs or "see the sources page"}.</p></details>
+</section>"""
+
+
+def topic_page(key: str, hist: dict, extra: str = "") -> str:
+    t = TOPICS[key]
+    inds = _ind_map(hist)
+    ages, default = hist.get("ages", [30]), hist.get("default_age", 30)
+    blocks = "".join(chart_block(c, inds, ages, f"c-{key}-{n}") for n, c in enumerate(t["charts"]))
+    return f"""
+<section class="page-head">
+  <p class="kicker"><a href="index.html">Boomermeter</a> / {esc(t["title"])}</p>
+  <h1>{esc(t["title"])}</h1>
+  <p class="hero-lede">{esc(t["lede"])}</p>
+  {age_picker(ages, default)}
+  <p class="caption">Shaded spans mark the years each generation was turning that age (Boomers, born 1946–64, turned 30
+  in 1976–94). Each card is the average over those years; its range is the lowest and highest year. Generations still
+  inside their window show how many years are in so far.</p>
+</section>
+{blocks}
+{extra}"""
+
+
+def headline(key: str, hist: dict) -> str:
+    """One-line summary for the index page's explore grid."""
+    inds = _ind_map(hist)
+    t = TOPICS[key]
+    ind = next((inds[c["compare"]] for c in t["charts"] if c.get("compare") in inds), None)
+    if not ind:
+        return ""
+    f = ind["fmt"]
+    g = ind["at_age"].get("30", {})
+    parts = [f'{esc(ind["short"])}: <strong>{esc(f.format(ind["latest"]["value"]))}</strong> now']
+    if "Boomer" in g:
+        parts.append(f'{esc(f.format(g["Boomer"]["mean"]))} when Boomers were 30')
+    return " · ".join(parts)
+
+
+def literature_table(lit: list[dict]) -> str:
+    rows = []
+    for e in lit:
+        rng = f'<br><span class="caption">{esc(e["range"])}</span>' if e.get("range") else ""
+        note = f'<br><span class="caption">{esc(e["note"])}</span>' if e.get("note") else ""
+        rows.append(
+            f'<tr><td><strong>{esc(e["value"])}</strong>{rng}</td>'
+            f'<td>{esc(e["group"])}<br><span class="caption">{esc(e["period"])}</span></td>'
+            f'<td>{esc(e["measure"])}</td>'
+            f'<td><a href="{esc(e["url"])}">{esc(e["source"])}</a>{note}</td></tr>')
+    return f"""
+<section class="chart-block" id="published">
+  <h3>What the richest actually pay: published estimates</h3>
+  <p>No official statistic answers this, so we don’t compute our own; we report the main published estimates and what
+  each one measures. They differ because they answer different questions: which taxes count (income tax only, or
+  corporate and estate taxes too), and what counts as income (taxable income, or gains on assets not yet sold).
+  The spread between them is the real state of knowledge, and the two studies of the same group and years, 24% and 38%,
+  bracket the serious disagreement.</p>
+  <div class="scroll"><table class="lit"><thead><tr><th>Estimate</th><th>Who, when</th><th>What it measures</th>
+  <th>Source</th></tr></thead><tbody>{"".join(rows)}</tbody></table></div>
+</section>"""
