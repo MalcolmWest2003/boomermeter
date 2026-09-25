@@ -9,7 +9,7 @@ from pathlib import Path
 
 import markdown
 
-from .. import config, stats
+from .. import config, landmarks, stats
 from ..metrics import headcount as hc
 from .svg import esc, line_chart, stacked_bar
 
@@ -65,7 +65,8 @@ def landmark_list(state: dict) -> list[dict]:
         item = {"id": lid, "name": cfg["display_name"], "anchor": anchors[lid],
                 "status": lm["status"], "caveat": cfg["caveat_line"], "method": cfg["method"]}
         if lm["status"] == "projected":
-            item.update(central=lm["central"], low=lm["low"], high=lm["high"])
+            item.update(central=lm["central"], low=lm["low"], high=lm["high"],
+                        range_label=lm.get("range_label") or landmarks.range_label(lm))
             if hcs:
                 item["pos"] = 50.0 if lid == "lm_cohort_half_gone" else hc.share_gone_at(hcs, d(lm["central"]))
         elif lm["status"] == "passed":
@@ -99,7 +100,7 @@ def meter(state: dict, lms: list[dict]) -> str:
             title = f'{esc(lm["name"])}: passed around {(lm.get("central") or "")[:4]}'
             year = f'✓ {(lm.get("central") or "")[:4]}'
         else:
-            title = f'{esc(lm["name"])}: projected {lm["central"][:4]} (range {lm["low"][:4]}–{lm["high"][:4]})'
+            title = f'{esc(lm["name"])}: projected {lm["central"][:4]} (range {esc(lm["range_label"])})'
             year = lm["central"][:4]
         marks.append(
             f'<a class="landmark row{row} {lm["status"]}" href="#{lm["anchor"]}" style="left:{lm["pos"]:.2f}%" title="{title}">'
@@ -141,7 +142,7 @@ def landmark_cards(lms: list[dict]) -> str:
     cards = []
     for lm in lms:
         if lm["status"] == "projected":
-            rng = (f'range {lm["low"][:4]}–{lm["high"][:4]}' if lm["low"][:4] != lm["high"][:4]
+            rng = (f'range {esc(lm["range_label"])}' if lm["low"][:4] != lm["high"][:4]
                    else f'all scenarios land in {lm["low"][:4]}')
             when = f'<div class="lm-year">{lm["central"][:4]}</div><div class="lm-range">{rng}</div>'
         elif lm["status"] == "passed":
@@ -250,7 +251,13 @@ def wealth_section(state: dict) -> str:
                              x_fmt=lambda x: f"Q{(stats.from_year_frac(x).month - 1)//3 + 1} {stats.from_year_frac(x).year}",
                              hrefs=[{"at": 50, "label": ""}], aria=title) + "</figure>")
 
-    if lm.get("status") == "projected":
+    if lm.get("status") == "projected" and lm.get("windows_without_crossing"):
+        n_no, n_all = len(lm["windows_without_crossing"]), len(lm.get("fits") or [])
+        lm_text = (f'<p>The trend over the last five years puts the share below half in <strong>{lm["central"][:4]}</strong>, '
+                   f'but this landmark is not settled. Fitted over the last 3 to 7 years, the earliest crossing is {lm["low"][:4]}, '
+                   f'and {n_no} of {n_all} fits never cross at all, because the share has been flat or rising recently '
+                   f'while stock prices rose. That spread is the shaded band.</p>')
+    elif lm.get("status") == "projected":
         lm_text = (f'<p>If the share keeps falling at its recent pace, it drops below half in <strong>{lm["central"][:4]}</strong>. '
                    f'Fitting the trend over the last 3 to 7 years instead gives anywhere from {lm["low"][:4]} to {lm["high"][:4]}; '
                    f'that spread is the shaded band. Stock and housing markets can move this by years in either direction.</p>')
@@ -331,7 +338,7 @@ def congress_section(state: dict) -> str:
         aria="Boomer share of Congress since its peak, with projection")
     lm_text = (f'Boomers hold <strong>{c["boomer_share"]:.1f}%</strong> of seats ({c["boomer_count"]} of {c["seated_with_birthday"]}). '
                f'At the pace of the last few Congresses, that falls below a third in <strong>{lm["central"][:4]}</strong> '
-               f'(range {lm["low"][:4]}–{lm["high"][:4]}).' if lm.get("status") == "projected" else
+               f'(range {esc(landmarks.range_label(lm))}).' if lm.get("status") == "projected" else
                f'Boomers hold <strong>{c["boomer_share"]:.1f}%</strong> of seats.')
     return f"""
 <section id="congress" class="block">

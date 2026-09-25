@@ -90,7 +90,7 @@ def compute(members, prov, today: dt.date, reg: dict) -> tuple[list[Entry], dict
                              lm["central"][:4], "projected", today.isoformat(), "year",
                              low=stats.year_frac(dt.date.fromisoformat(lm["low"])),
                              high=stats.year_frac(dt.date.fromisoformat(lm["high"])),
-                             display_range=f"{lm['low'][:4]}–{lm['high'][:4]}",
+                             display_range=landmarks.range_label(lm),
                              method=["linear_trend_multiwindow"], sources=prov))
 
     site = {

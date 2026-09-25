@@ -153,3 +153,12 @@ def test_snapshot_dedup(tmp_path):
     assert len(lines) == 1
     snapshot.record("s", "f.csv", "u", b"abcd", dt.date(2026, 1, 3))
     assert len((config.SNAPSHOTS / "s" / "manifest.jsonl").read_text().splitlines()) == 2
+
+
+def test_range_label_open_ended_when_some_windows_never_cross():
+    lm = {"low": "2028-03-03", "high": "2053-11-16",
+          "fits": [{"crossing": None}, {"crossing": None}, {"crossing": 2053.9}, {"crossing": 2031.1}, {"crossing": 2028.2}],
+          "windows_without_crossing": [12, 16]}
+    assert landmarks.range_label(lm) == "2028 or later; 2 of 5 trends never get there"
+    lm["windows_without_crossing"] = []
+    assert landmarks.range_label(lm) == "2028–2053"
