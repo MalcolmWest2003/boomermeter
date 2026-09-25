@@ -105,9 +105,11 @@
       var age = +card.dataset.age, y = b + age, v = d.map[y];
       var born = d.map[b] !== undefined ? fmt(d.fmt, d.map[b]) : (b < d.first ? "before this data starts" : "n/a");
       var now = fmt(d.fmt, d.map[d.last]);
-      var main = v !== undefined ? fmt(d.fmt, v) : "not yet";
-      var when = v !== undefined ? "at " + age + ", in " + y :
-                 (y > d.last ? "you turn " + age + " in " + y : "no data for " + y);
+      var main, when;
+      if (v !== undefined) { main = fmt(d.fmt, v); when = "at " + age + ", in " + y; }
+      else if (y > d.last && d.last >= b) {
+        main = now; when = "now, at " + (d.last - b) + ". You turn " + age + " in " + y + ".";
+      } else { main = "n/a"; when = "no data for " + y; }
       card.innerHTML = '<div class="cmp-g">You, born ' + b + '</div><div class="cmp-v">' + main + '</div>' +
         '<div class="cmp-w">' + when + '</div><div class="cmp-r">the year you were born: ' + born +
         '<br>latest (' + d.last + '): ' + now + '</div>';

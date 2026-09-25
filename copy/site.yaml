@@ -1,0 +1,119 @@
+# The words on the site. Edit freely.
+# Anything in {curly_braces} is filled in from the data on every run; keep the
+# braces and the name inside them. Numbers in plain text are not updated.
+
+home:
+  title: "Boomers are {boomer_adult_pct}% of adults. They hold {boomer_wealth_pct}% of the wealth."
+  lede: >-
+    The Baby Boom generation, born 1946 to 1964, holds more of America's wealth and more of its seats in Congress
+    than the generations before it held at the same age. This site keeps count of the handoff to everyone else,
+    and of what it has cost each generation since to get started.
+  meter_label: "of the Boomers at their peak are gone"
+  explore_title: "Then and now"
+  explore_lede: >-
+    What did a house cost when your parents were your age? What did a year of college cost in hours of work?
+    Pick a topic. Every page lets you put in your birth year.
+  explore:
+    population: "How many Boomers are left, and when half of them will be gone."
+    wealth: "Who owns what, generation by generation, and how that compares with the people who came before."
+    power: "Congress has never been older. Here's who holds the seats, and how fast they're letting go."
+
+topics:
+  housing:
+    title: "Housing"
+    lede: "Rent, a down payment, a mortgage. What getting a place of your own cost, measured against what people earned."
+  work:
+    title: "Work and pay"
+    lede: >-
+      Workers produce far more per hour than they did in 1948. How much of that shows up in paychecks, and how much
+      goes to the people who own the companies?
+  college:
+    title: "College"
+    lede: "What a year at a public university costs, counted in hours of minimum-wage work."
+  taxes:
+    title: "Taxes at the top"
+    lede: "What the richest people and the biggest companies are supposed to pay, and what they actually pay."
+
+charts:
+  hist_rent_vs_wage:
+    head: "Rent against pay"
+    text: >-
+      Before anyone buys, they rent. By this measure rent has roughly kept pace with an ordinary worker's pay since
+      1964. That's not the whole story: this index follows people who already live in their place. Rents for new
+      leases, which is what you pay when you move, have gone up faster.
+    meaning: >-
+      How much rent has grown compared with an ordinary worker's hourly pay, both starting at 100 in 1964. At 150,
+      rent has grown half again as fast as pay.
+  hist_price_to_income:
+    head: "What a house costs"
+    meaning: >-
+      How many years of a typical family's entire income it takes to equal the price of a typical new house.
+      Higher means harder to buy.
+  hist_down_payment_months:
+    head: "Saving for the down payment"
+    text: "A low interest rate helps with the monthly payment. It does nothing about the down payment you have to save first."
+    meaning: >-
+      How many months of a typical family's pay it takes to save a 20% down payment, if they spent nothing on rent,
+      food or anything else.
+  hist_mortgage_payment_share:
+    head: "The monthly payment"
+    text: >-
+      Here Boomers had it harder. Mortgage rates hit 18% in 1981, so the monthly payment took a bigger bite out of a
+      young family's income than it has for Millennials, even though houses cost more now. The Boomer squeeze was the
+      payment. For Millennials and Gen Z it's the price and the down payment. Rates rose again after 2022, and the
+      payment is climbing back.
+    meaning: >-
+      How much of a typical family's income the monthly mortgage payment would take, buying the typical new house
+      with 20% down.
+  hist_mortgage_rate:
+    head: "Interest rates"
+    text: >-
+      High rates are bad for borrowers and good for people who already own things. When rates fell for forty years
+      after 1981, every house and stock that was already owned went up in value. Most of those owners were Boomers.
+    meaning: "The interest rate on a typical 30-year home loan."
+  hist_productivity_index:
+    head: "Output went up. Did pay?"
+    text: >-
+      Economists argue about how big this gap is. The argument is mostly about which pay figure to use: with or
+      without benefits, with or without managers. The two pay lines are the two ends of that argument. There's a gap
+      either way.
+    meaning: >-
+      How much more a worker produces in an hour than in 1948, next to how much more workers are paid. If pay kept
+      up with output, the lines would move together.
+  hist_labor_share:
+    head: "Workers' cut"
+    meaning: >-
+      Out of every dollar the economy earns, how many cents go to workers as pay and benefits. The rest goes to
+      owners: profits, rent and interest.
+  hist_profit_share:
+    head: "Owners' cut"
+    meaning: "Corporate profits after tax, as a slice of everything the economy produces."
+  hist_real_min_wage:
+    head: "The minimum wage"
+    meaning: "The federal minimum wage, converted to today's dollars so different years can be compared."
+  hist_teen_unemployment:
+    head: "Getting a first job"
+    meaning: "Out of every 100 teenagers (16 to 19) looking for work, how many can't find a job."
+  hist_teen_participation:
+    head: "How many teens work"
+    meaning: "Out of every 100 people aged 16 to 19, how many have a job or are looking for one."
+  hist_tuition_hours_min_wage:
+    head: "A year of college, in hours of work"
+    text: >-
+      This is the sticker price. Grants and discounts mean most students pay less, and that gap has grown. The only
+      price that goes back to the 1960s is the sticker price, so that's what this uses.
+    meaning: >-
+      How many hours at the federal minimum wage it takes to pay one year of in-state tuition at a public
+      university. A full-time job is about 2,000 hours a year.
+  hist_tuition_real:
+    head: "Tuition in today's dollars"
+    meaning: "One year of in-state tuition and fees at a public university, in today's dollars."
+  hist_top_income_tax_rate:
+    head: "The top tax bracket"
+    text: >-
+      The top rate was over 90% in the 1950s, but almost nobody paid it. It kicked in at incomes worth millions of
+      today's dollars, and there were plenty of ways around it. What the richest actually pay is further down the page.
+    meaning: "The federal income tax rate on the highest slice of the highest incomes."
+  hist_corp_effective_tax:
+    head: "What corporations pay"
+    meaning: "Out of every dollar of corporate profit, how many cents go to the federal government as corporate income tax."

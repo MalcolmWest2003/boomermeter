@@ -2,9 +2,24 @@
 what each generation faced at the same age, with sources and caveats."""
 from __future__ import annotations
 
+import functools
 import json
 
+import yaml
+
+from .. import config
 from .svg import esc, line_chart
+
+
+@functools.lru_cache(maxsize=1)
+def site_copy() -> dict:
+    """The site's prose, from copy/site.yaml (editable without touching code)."""
+    path = config.ROOT / "copy" / "site.yaml"
+    return yaml.safe_load(path.read_text()) if path.exists() else {}
+
+
+def chart_copy(ind_id: str) -> dict:
+    return (site_copy().get("charts") or {}).get(ind_id) or {}
 
 GEN_VARS = {"Silent": "--gen-silent", "Boomer": "--gen-boomer", "Gen X": "--gen-x",
             "Millennial": "--gen-millennial", "Gen Z": "--gen-z"}
@@ -251,7 +266,7 @@ def compare_cards(ind: dict, ages: list[int]) -> str:
         you = (f'<div class="cmp-card you" style="--c:var(--ink)" data-ind="{esc(ind["id"])}" data-age="{age}" hidden>'
                f'</div>')
         blocks.append(f'<div class="cmp" data-age="{age}">{conclusion(ind, age)}'
-                      f'<div class="cmp-row">{"".join(cards)}{you}</div></div>')
+                      f'<div class="cmp-row">{you}{"".join(cards)}</div></div>')
     return "".join(blocks)
 
 
@@ -309,6 +324,9 @@ def chart_block(spec: dict, inds: dict, ages: list[int], cid: str) -> str:
     srcs = "; ".join(sorted({f'<a href="{esc(s["url"])}">{esc(s["filename"])}</a>'
                              for i in present for s in i.get("sources", []) if s.get("url", "").startswith("http")}))
     latest = f'Latest: <strong>{esc(fmt.format(first["latest"]["value"]))}</strong> ({first["latest"]["year"]}).'
+    cc = chart_copy(first["id"])
+    meaning = cc.get("meaning") or MEANING.get(first["id"], "")
+    text = cc.get("text") or spec.get("text", "")
     blob = ""
     if compare:
         data = {"years": compare["years"], "values": compare["values"], "fmt": compare["fmt"]}
@@ -316,10 +334,10 @@ def chart_block(spec: dict, inds: dict, ages: list[int], cid: str) -> str:
                 f'{json.dumps(data, separators=(",", ":"))}</script>')
     return f"""
 <section class="chart-block">{blob}
-  <h3>{esc(spec["head"])}</h3>
+  <h3>{esc(cc.get("head") or spec["head"])}</h3>
   <p class="chart-title">{esc(first["title"])}. {latest}</p>
-  {f'<p class="meaning">{esc(MEANING[first["id"]])}</p>' if first["id"] in MEANING else ""}
-  {f'<p>{esc(spec["text"])}</p>' if spec.get("text") else ""}
+  {f'<p class="meaning">{esc(meaning)}</p>' if meaning else ""}
+  {f'<p>{esc(text)}</p>' if text else ""}
   {legend}{svg}
   {compare_cards(compare, ages) if compare else ""}
   <details><summary>What this measures, and its limits</summary><ul>{notes}</ul>
@@ -328,7 +346,7 @@ def chart_block(spec: dict, inds: dict, ages: list[int], cid: str) -> str:
 
 
 def topic_page(key: str, hist: dict, extra: str = "") -> str:
-    t = TOPICS[key]
+    t = {**TOPICS[key], **((site_copy().get("topics") or {}).get(key) or {})}
     inds = _ind_map(hist)
     ages, default = hist.get("ages", [30]), hist.get("default_age", 30)
     blocks = "".join(chart_block(c, inds, ages, f"c-{key}-{n}") for n, c in enumerate(t["charts"]))
@@ -342,9 +360,13 @@ def topic_page(key: str, hist: dict, extra: str = "") -> str:
   what things looked like the year you were born, and where they are now. Nothing leaves your browser.</span></div>
   {view_picker()}
   {age_picker(ages, default)}
-  <p class="caption">Shaded spans mark the years each generation was turning that age (Boomers, born 1946–64, turned 30
-  in 1976–94). Each card is the average over those years; its range is the lowest and highest year. Generations still
-  inside their window show how many years are in so far.</p>
+  <details><summary>How to read these charts</summary>
+  <p><strong>By age</strong> puts every generation on the same clock: each line shows what that generation faced
+  at each age, so you can read straight up from, say, 25 and compare. <strong>By year</strong> shows the plain history,
+  with the years each generation was turning the age you picked shaded in its color.</p>
+  <p>The cards under each chart average the years each generation spent turning that age (Boomers, born 1946 to
+  1964, turned 25 from 1971 to 1989). The range is the best and worst single year. Gen Z and Millennials are still
+  living through some of these ages, so their cards say how many years are in so far.</p></details>
 </section>
 {blocks}
 {extra}"""

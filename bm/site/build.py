@@ -113,7 +113,7 @@ def meter(state: dict, lms: list[dict]) -> str:
   <div class="meter-head">
     <div class="big">{gone:.1f}<span class="pct">%</span></div>
     <div class="meter-copy">
-      <p class="meter-lede">of the Boomer generation at its peak is gone {est_tag('interpolated')}</p>
+      <p class="meter-lede">{esc((topics.site_copy().get("home") or {}).get("meter_label", "of the Boomer generation at its peak is gone"))} {est_tag('interpolated')}</p>
       <p class="meter-sub">About <strong>{stats.fmt_millions(h['value'])}</strong> Boomers live in the US today,
       down from <strong>78.8 million</strong> at the {h['peak_year']} peak.
       Range: {stats.fmt_millions(h['low'])} – {stats.fmt_millions(h['high'])}.</p>
@@ -477,13 +477,13 @@ def page(title: str, body: str, description: str, current: str = "index.html") -
 <title>{esc(title)}</title>
 <meta name="description" content="{esc(description)}">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400..700&display=swap" rel="stylesheet">
 <style>{css}</style></head>
 <body>
 <header class="top"><a class="brand" href="index.html">BOOMERMETER</a>
 <nav>{nav}</nav></header>
 <main>{body}</main>
-<footer><p>US data only. Every number is sourced; every estimate is labeled. <a href="methods.html">Methods</a> ·
+<footer><p>US data only. Sources for every number are on the <a href="sources.html">sources page</a>. <a href="methods.html">Methods</a> ·
 <a href="sources.html#corrections">Corrections</a> · <a href="data/latest.json">Data (JSON)</a> ·
 <a href="data/ledger.jsonl">Ledger</a> · <a href="{REPO_URL}">Code</a></p></footer>
 <div id="tt" class="tt" hidden></div>
@@ -505,14 +505,15 @@ EXPLORE = [
 def explore_grid(state: dict) -> str:
     hist = (state.get("history") or {}).get("data") or {}
     cards = []
+    hc = topics.site_copy().get("home") or {}
     for href, title, text in EXPLORE:
         key = href.split(".")[0]
+        text = (hc.get("explore") or {}).get(key, text)
         line = text or topics.headline(key, hist) or topics.TOPICS[key]["lede"]
         cards.append(f'<a class="ex-card" href="{href}"><div class="ex-t">{esc(title)} →</div>'
                      f'<div class="ex-l">{line}</div></a>')
-    return (f'<section class="explore"><h2 class="kicker">Then and now</h2>'
-            f'<p class="lede">What each generation faced at the same age: homes, pay, college, taxes, and who holds '
-            f'the wealth and the seats. Every comparison is sourced and every range printed.</p>'
+    return (f'<section class="explore"><h2 class="kicker">{esc(hc.get("explore_title", "Then and now"))}</h2>'
+            f'<p class="lede">{esc(hc.get("explore_lede", ""))}</p>'
             f'<div class="ex-grid">{"".join(cards)}</div></section>')
 
 
@@ -530,12 +531,18 @@ def build(state: dict, out: Path = config.SITE_OUT) -> Path:
               'The live site uses the pipeline’s real data.</div>' if demo else "")
     updated = nice_date(state["run_date"])
     handoff = (state.get("handoff") or {}).get("data") or {}
+    hc = topics.site_copy().get("home") or {}
+    home_title = "The handoff, counted."
+    wp = handoff.get("wealth_vs_population") or {}
+    if wp.get("latest_year") and hc.get("title"):
+        b = wp["by_year"][wp["latest_year"]].get("Boomer")
+        if b:
+            home_title = hc["title"].format(boomer_adult_pct=round(b["adult_share"]),
+                                            boomer_wealth_pct=round(b["wealth_share"]))
     body = f"""{banner}
 <section class="hero">
-  <h1>The handoff, counted.</h1>
-  <p class="hero-lede">The Baby Boom generation has held the center of American wealth and political power longer than
-  any generation before it. This site tracks the transfer as it happens, and what each generation faced on the way,
-  with sources you can check and every estimate labeled as one.</p>
+  <h1>{esc(home_title)}</h1>
+  <p class="hero-lede">{esc(hc.get("lede", ""))}</p>
   <p class="updated">Updated {updated}</p>
 </section>
 {meter(state, lms)}
