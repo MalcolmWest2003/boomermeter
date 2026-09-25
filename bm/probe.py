@@ -6,6 +6,7 @@ on GitHub runners) and read the output.
 
   python -m bm.probe                 # all candidates
   python -m bm.probe MSPUS FEDFUNDS  # just these FRED ids
+  python -m bm.probe https://...xlsx  # one spreadsheet, every row
 """
 from __future__ import annotations
 
@@ -65,7 +66,7 @@ def show_fred(sid: str) -> None:
         print(f"    PARSE FAILED: {e}")
 
 
-def show_other(url: str) -> None:
+def show_other(url: str, max_rows: int = 60) -> None:
     try:
         raw = http_get(url, retries=2, timeout=60)
     except Exception as e:  # noqa: BLE001
@@ -79,7 +80,7 @@ def show_other(url: str) -> None:
             for ws in wb.worksheets[:3]:
                 print(f"   sheet {ws.title!r}")
                 for i, row in enumerate(ws.iter_rows(values_only=True)):
-                    if i >= 60:
+                    if i >= max_rows:
                         break
                     cells = [str(c)[:28] for c in row if c is not None]
                     if cells:
@@ -93,7 +94,7 @@ def show_other(url: str) -> None:
             book = xlrd.open_workbook(file_contents=raw)
             for sh in book.sheets()[:2]:
                 print(f"   sheet {sh.name!r} {sh.nrows}x{sh.ncols}")
-                for r in range(min(sh.nrows, 130)):
+                for r in range(min(sh.nrows, max_rows)):
                     cells = [str(c)[:28] for c in sh.row_values(r) if c not in ("", None)]
                     if cells:
                         print("    ", r, " | ".join(cells)[:220])
@@ -105,8 +106,8 @@ def show_other(url: str) -> None:
 
 def main(argv: list[str]) -> None:
     if argv:
-        for sid in argv:
-            show_fred(sid)
+        for a in argv:
+            show_other(a, max_rows=10_000) if a.startswith("http") else show_fred(a)
         return
     for sid in FRED_CANDIDATES:
         show_fred(sid)
