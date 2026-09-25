@@ -29,12 +29,16 @@ def alldata_csv(vintage: int, drift: float = 1.0) -> bytes:
     y, m = 2020, 4
     while (y, m) <= (vintage + 1, 12):
         t = y + (m - 1) / 12
-        total = 0
+        total, rows = 0, []
         for age in range(101):
             p = round(_pop(age, t, drift))
             total += p
-            w.writerow(["R", m, y, age, p, p // 2, p - p // 2])
-        w.writerow(["R", m, y, 999, total, total // 2, total - total // 2])
+            rows.append([age, p])
+        rows.append([999, total])
+        # Real files code April 2020 as 4.1 (census) and 4.2 (estimates base)
+        for mc in ((4.1, 4.2) if (y, m) == (2020, 4) else (m,)):
+            for age, p in rows:
+                w.writerow(["R", mc, y, age, p, p // 2, p - p // 2])
         m += 1
         if m == 13:
             y, m = y + 1, 1

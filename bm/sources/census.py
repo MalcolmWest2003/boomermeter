@@ -30,7 +30,11 @@ def _rows(content: bytes):
 
 
 def parse_alldata(content: bytes) -> dict[tuple[int, int], dict[int, float]]:
-    """{(year, month): {age: population}} for the resident universe."""
+    """{(year, month): {age: population}} for the resident universe.
+
+    April 2020 appears as MONTH 4.1 (census count) and 4.2 (estimates base),
+    not as a monthly estimate; those rows are skipped. Monthly estimates start
+    at May 2020."""
     out: dict[tuple[int, int], dict[int, float]] = {}
     reader = _rows(content)
     need = {"MONTH", "YEAR", "AGE", "TOT_POP"}
@@ -43,7 +47,10 @@ def parse_alldata(content: bytes) -> dict[tuple[int, int], dict[int, float]]:
         age = int(r[cols["AGE"]])
         if age > 100:  # 999 = all ages
             continue
-        key = (int(r[cols["YEAR"]]), int(r[cols["MONTH"]]))
+        month = float(r[cols["MONTH"]])
+        if not month.is_integer():  # 4.1 / 4.2: April 2020 base, not an estimate
+            continue
+        key = (int(r[cols["YEAR"]]), int(month))
         out.setdefault(key, {})[age] = float(r[cols["TOT_POP"]])
     return out
 
