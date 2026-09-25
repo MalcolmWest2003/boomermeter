@@ -33,6 +33,15 @@ scope** until the site is robust.
 - **Numbers that cut against the framing stay on the page.** E.g. the mortgage *payment* share at 30 was higher for
   Boomers (1980s rates) and the typical worker's real wage at 30 is higher for Millennials. The pages say so and
   point to the measures where the squeeze is real (price-to-income, down payment, labor/profit shares, tuition).
+- **The handoff bars (Sept 2026):** "handed off" = 100 × (Boomer peak share − share now) ÷ peak share, for household
+  net worth (DFA) and seats in Congress, compared with earlier generations at the same average age and the same years
+  after their own peak. Finding as of Sept 2026: wealth 9% handed off vs at least 50% for "Silent and earlier" at the
+  same age; Congress 33% vs 49–64% for Lost/Greatest/Silent at the same age, but about the Silent pace measured from
+  each peak (Boomers peaked late, at average age 59). Headline: power is changing hands roughly on schedule, wealth is
+  not. Keep both halves on the page.
+- **DFA group labels:** the Fed's groups are "Silent and earlier" (born before 1946) and "Millennial" (1981 or later,
+  includes Gen Z). Label them that way wherever DFA numbers appear.
+- **Charts have a by-age view** (one line per generation, x = age of the middle birth year) next to the by-year view.
 - **Published estimates, not our own, where no official statistic exists** (e.g. billionaire tax rates):
   `registry/literature.yaml`, each with what it measures and the critique beside it.
 - **Build order from the original brief:** ledger + registry → fetch layer → Tier 1 metrics → house style → (later)
@@ -47,8 +56,10 @@ bm/ledger.py          append-only record of every displayed number; auto-logs co
 bm/registry.py        loads/validates registry/metrics.yaml (every metric must be registered)
 bm/landmarks.py       multi-window trend crossings -> central date + range
 bm/sources/*.py       congress-legislators, Census PEP + projections, Fed DFA, FRED, NCES, IRS SOI
-bm/metrics/*.py       headcount (meter), congress, wealth, history (generations at the same age)
-bm/site/              static site builder (build.py pages, topics.py topic pages), SVG charts, CSS, JS
+bm/metrics/*.py       headcount (meter), congress, wealth, history (generations at the same age),
+                      handoff (transfer bars, wealth vs population; derived from the other sections)
+bm/site/              static site builder (build.py pages, topics.py topic pages, handoff_views.py bars and
+                      generation charts), SVG charts, CSS, JS
 bm/probe.py           prints what sources return; run on GitHub runners by .github/workflows/probe.yml
 registry/literature.yaml  published estimates shown on the taxes page
 bm/run.py             orchestrator; each source isolated; failures -> run_status.json
@@ -64,7 +75,9 @@ Local preview with fake Census/Fed data (the page shows a PREVIEW banner):
 session's network policy). Work around it with the probe workflow: it runs on every push to a `claude/**` branch and
 prints what sources return (`PROBE_ARGS` in `.github/workflows/probe.yml`: `--history` for the history indicators on
 live data, a FRED id, or a spreadsheet URL for every row). Read the job log with the GitHub tools. To preview real
-data locally, copy `data/` to a temp dir and run `bm.run` against it: failed fetches fall back to saved state.
+data locally, copy `data/` to a temp dir and run `bm.run` against it with `bm.snapshot.http_get` patched to serve
+each URL from the committed snapshot recorded in `data/snapshots/*/manifest.jsonl` (every source is snapshotted since
+the Sept 25 runs; congress-legislators is fetched from GitHub, which is reachable).
 
 ## Verified vs. assumed (as of the first build, Sept 25, 2026)
 
@@ -108,8 +121,8 @@ Checks after the first real run:
 
 ## Known next steps
 
-1. Wealth at the same age from the Fed DFA (already fetched): each generation's share of net worth when it averaged
-   about 35 (Boomers 1989–90 vs Millennials now), with real dollars. The strongest wealth comparison we can make.
+1. Typical (median) household wealth by generation at the same age from the Fed's Survey of Consumer Finances
+   (triennial, 1989–2022; the 2025 survey is due late 2026). The DFA gives totals, not typical households.
 2. Replace the 78.8M peak constant with a value computed from Census 1990s intercensal single-year-of-age files
    using the same convention (keep the constant as a cross-check).
 3. Remaining Tier 1: homeownership rate by age (Census HVS table 19, 1994+; earlier years need another source),

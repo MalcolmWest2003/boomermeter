@@ -58,7 +58,8 @@ def line_chart(cid: str, *, series=(), bands=(), x_domain, y_domain, x_ticks, y_
         wpx = sx(x1) - sx(x0)
         label = (f'<text class="gwlabel" x="{sx(x0) + 4:.1f}" y="{M["t"] + 12}" style="fill:var({wd["color"]})">'
                  f'{esc(wd["label"])}</text>') if wpx >= 7.5 * len(wd["label"]) else ""
-        out.append(f'<g class="gw" data-age="{wd["age"]}"><rect x="{sx(x0):.1f}" y="{M["t"]}" '
+        cls = "gw strong" if wd.get("strong") else "gw"
+        out.append(f'<g class="{cls}" data-age="{wd["age"]}"><rect x="{sx(x0):.1f}" y="{M["t"]}" '
                    f'width="{wpx:.1f}" height="{h - M["t"] - M["b"]}" style="fill:var({wd["color"]})">'
                    f'<title>{esc(wd["label"])}: {wd["x0"]}–{wd["x1"] - 1}</title></rect>{label}</g>')
     for b in bands:

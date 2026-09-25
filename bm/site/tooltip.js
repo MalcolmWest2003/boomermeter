@@ -58,3 +58,22 @@
     b.addEventListener("click", function () { set(b.dataset.age); });
   });
 })();
+
+// View picker (by age / by year / from peak). Falls back to the page's first
+// option when the remembered view isn't offered here.
+(function () {
+  var root = document.documentElement, KEY = "bm-view";
+  var btns = document.querySelectorAll(".viewpick button");
+  if (!btns.length) return;
+  function offered(v) { return Array.prototype.some.call(btns, function (b) { return b.dataset.view === v; }); }
+  function set(v) {
+    if (!offered(v)) v = btns[0].dataset.view;
+    root.dataset.view = v;
+    btns.forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.view === v)); });
+    try { localStorage.setItem(KEY, v); } catch (e) {}
+  }
+  var saved = null;
+  try { saved = localStorage.getItem(KEY); } catch (e) {}
+  set(saved || btns[0].dataset.view);
+  btns.forEach(function (b) { b.addEventListener("click", function () { set(b.dataset.view); }); });
+})();

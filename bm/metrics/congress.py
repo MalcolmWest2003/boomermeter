@@ -48,7 +48,12 @@ def compute(members, prov, today: dt.date, reg: dict) -> tuple[list[Entry], dict
         with_bday = [m for m, _ in rows if m.birthday]
         if not with_bday:
             continue
+        gen_counts: dict[str, int] = {}
+        for m in with_bday:
+            g = config.hist_generation_of(m.birthday.year) or "Other"
+            gen_counts[g] = gen_counts.get(g, 0) + 1
         hist.append({
+            "gen_share": {g: round(100 * c / len(with_bday), 2) for g, c in gen_counts.items()},
             "congress": n,
             "date": on.isoformat(),
             "median_age": round(stats.median([stats.age_on(m.birthday, on) for m in with_bday]), 2),
@@ -93,7 +98,16 @@ def compute(members, prov, today: dt.date, reg: dict) -> tuple[list[Entry], dict
                              display_range=landmarks.range_label(lm),
                              method=["linear_trend_multiwindow"], sources=prov))
 
+    # Today's generational shares on the same basis, so the history ends at today.
+    today_counts: dict[str, int] = {}
+    for m, _ in seated:
+        if m.birthday:
+            g = config.hist_generation_of(m.birthday.year) or "Other"
+            today_counts[g] = today_counts.get(g, 0) + 1
+    gen_today = {g: round(100 * c / n_seated, 2) for g, c in today_counts.items()}
+
     site = {
+        "gen_share_today": gen_today,
         "as_of": today.isoformat(),
         "median_age": {"house": med_h, "senate": med_s, "all": med_all},
         "seated": {"house": len(house), "senate": len(senate)},

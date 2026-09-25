@@ -13,7 +13,7 @@ from .. import config, landmarks, stats
 from ..metrics import headcount as hc
 import yaml
 
-from . import topics
+from . import handoff_views, topics
 from .svg import esc, line_chart, stacked_bar
 
 REPO_URL = "https://github.com/MalcolmWest2003/boomermeter"
@@ -471,7 +471,7 @@ def page(title: str, body: str, description: str, current: str = "index.html") -
     cur = ' aria-current="page"'
     nav = "".join(f'<a href="{href}"{cur if href == current else ""}>{label}</a>' for href, label in NAV)
     return f"""<!doctype html>
-<html lang="en" data-age="30"><head><meta charset="utf-8">
+<html lang="en" data-age="30" data-view="age"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{esc(title)}</title>
 <meta name="description" content="{esc(description)}">
@@ -528,6 +528,7 @@ def build(state: dict, out: Path = config.SITE_OUT) -> Path:
     banner = ('<div class="demo">PREVIEW — the Census and Fed numbers on this page are placeholders for layout only. '
               'The live site uses the pipeline’s real data.</div>' if demo else "")
     updated = nice_date(state["run_date"])
+    handoff = (state.get("handoff") or {}).get("data") or {}
     body = f"""{banner}
 <section class="hero">
   <h1>The handoff, counted.</h1>
@@ -537,6 +538,7 @@ def build(state: dict, out: Path = config.SITE_OUT) -> Path:
   <p class="updated">Updated {updated}</p>
 </section>
 {meter(state, lms)}
+{handoff_views.handoff_summary(handoff)}
 {landmark_cards(lms)}
 {explore_grid(state)}
 {coming_section()}"""
@@ -547,8 +549,22 @@ def build(state: dict, out: Path = config.SITE_OUT) -> Path:
         pages[href] = (f"{title} — Boomermeter", banner + f'<p class="kicker crumb"><a href="index.html">Boomermeter</a> / {esc(title)}</p>' + inner)
 
     sub("population.html", "Population", cohort_section(state))
-    sub("wealth.html", "Wealth", wealth_section(state))
-    sub("power.html", "Power", congress_section(state))
+    wdata = (state.get("wealth") or {}).get("data")
+    wealth_top = ""
+    if handoff.get("wealth_vs_population"):
+        wealth_top += handoff_views.wealth_vs_population(handoff["wealth_vs_population"])
+    if handoff.get("wealth_transfer"):
+        wealth_top += ('<section class="block" id="handoff"><h2>How much has been handed off</h2>'
+                       + handoff_views.transfer_bar("wealth", handoff["wealth_transfer"]) + "</section>")
+    if wdata:
+        wealth_top += handoff_views.wealth_generations(wdata, handoff)
+    sub("wealth.html", "Wealth", wealth_top + wealth_section(state))
+    power_top = ""
+    if handoff.get("power_transfer"):
+        power_top = ('<section class="block" id="handoff"><h2>How much power has been handed off</h2>'
+                     + handoff_views.transfer_bar("power", handoff["power_transfer"]) + "</section>"
+                     + handoff_views.congress_generations(handoff["power_transfer"]))
+    sub("power.html", "Power", power_top + congress_section(state))
     hist = (state.get("history") or {}).get("data")
     lit = literature(state)
     for key in topics.ORDER:

@@ -122,6 +122,53 @@ public-domain dataset of every member of Congress since 1789 with birthdates and
   dataset doesn't always shorten a term when a member died or resigned, so a seat can briefly show two holders. For
   those seats we keep the member whose term started later.
 
+## The handoff: how far it has gone
+
+**Handed off** = the share of the Boomer *peak* share that other generations now hold:
+100 × (peak share − share now) ÷ peak share. 0% means Boomers are at their peak; 100% means they hold nothing.
+It is measured for two things:
+
+- **Wealth:** the Boomer share of US household net worth (Fed DFA, quarterly). Peak 2016.
+- **Power:** the Boomer share of voting seats in Congress, measured one year into each Congress and today. Peak 2014.
+
+This measures position, not gifts or bequests: a share falls when Boomers pass wealth on, but also when other
+generations' wealth grows faster. For wealth it moves with the stock market, which Boomers own more of.
+
+**Against earlier generations.** Each bar is compared with earlier generations in two ways:
+
+- *Same average age:* the generation's handed-off share when its middle birth year was the age Boomers' middle
+  birth year (1955) is now.
+- *Same years after peak:* the same measure the same number of years after that generation's own peak.
+
+For wealth, the only earlier group in the Fed's data is "Silent and earlier" (born before 1946), which includes the
+Greatest Generation. The DFA starts in 1989 Q3 and that group's share was highest at the first observation, so its true
+peak was at least that high: its handed-off figures are lower bounds ("at least"). Placing that group at the Silent
+Generation's middle birth year also flatters it, because the group includes older people. Both biases make the
+comparison conservative: the gap they show between Boomers and the generation before is, if anything, understated.
+
+For Congress, generations are: Missionary 1860–1882 and Lost 1883–1900 (Strauss and Howe), Greatest 1901–1927,
+Silent 1928–1945 and later (Pew). Values between Congress samples are interpolated linearly.
+
+## Share of the people, share of the wealth
+
+Each Fed DFA generation group's share of household net worth (Q2) next to its share of US residents aged 18 and over
+(Census PEP, July 1 of the same year, same cohort convention as the meter), grouped by the Fed's birth years: before
+1946, 1946–1964, 1965–1980, 1981 and later. The ratio is wealth share ÷ adult share. "Mean per adult" is the group's
+household net worth divided by its adults.
+
+- Wealth is counted by household head and population by person. Adult children living with Boomer parents add to
+  Boomer wealth but Millennial population, which raises the Boomer ratio.
+- A mean is pulled up by the richest households. It says how much wealth each generation holds per member, not what a
+  typical member has.
+- We use the latest July that Census has estimated (not its short-term projection), paired with the Fed's Q2.
+
+## Charts by age
+
+Most charts can be shown **by year** or **by age**. In the by-age view each line follows one generation: the value in
+the year its middle birth year reached each age (Boomers: 1955 + age). Reading straight up from an age compares
+generations at the same point in life. Lines for the topic pages run from 15 to 70; the wealth and Congress charts use
+the full range of the data.
+
 ## Then and now: generations at the same age
 
 The housing, work, college and taxes pages compare what each generation faced **at the same age**, because a

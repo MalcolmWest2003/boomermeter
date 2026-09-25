@@ -52,6 +52,23 @@ def cohort_on(ages: dict[int, float], year: int, month: int = 7) -> float:
     return total
 
 
+# The Fed DFA's generation groups (birth years). Used to put wealth shares next
+# to population shares. None = open-ended.
+DFA_GROUPS = [("Silent & earlier", None, 1945), ("Boomer", 1946, 1964), ("Gen X", 1965, 1980),
+              ("Millennial & younger", 1981, None)]
+
+
+def adults_by_group(ages: dict[int, float], year: int, min_age: int = 18) -> dict[str, float]:
+    """Adults in each DFA birth-year group on July 1 of `year` (same cohort
+    convention as the meter: age a on July 1 = born in year - a)."""
+    out = {}
+    for name, b0, b1 in DFA_GROUPS:
+        a_lo = max(min_age, year - b1) if b1 is not None else min_age
+        a_hi = year - b0 if b0 is not None else 10_000
+        out[name] = sum(v for a, v in ages.items() if a_lo <= a <= a_hi)
+    return out
+
+
 def _monthly_cohort(monthly: dict) -> dict[dt.date, float]:
     return {dt.date(y, m, 1): cohort_on(ages, y, m) for (y, m), ages in sorted(monthly.items())}
 
@@ -159,7 +176,12 @@ def compute(pep: dict, proj: dict | None, proj_prov: list, today: dt.date) -> tu
               method=["one_minus_headcount_over_peak"], sources=sources),
     ]
 
+    # Adults by DFA group on each July 1 Census has estimated (not projected).
+    adults = {str(y): adults_by_group(ages, y) for (y, m), ages in sorted(pep["monthly"].items())
+              if m == 7 and y <= v}
+
     site = {
+        "adults_by_dfa_group": adults,
         "as_of": today.isoformat(), "vintage": v, "anchor": anchor.isoformat(),
         "value": est["value"], "low": est["low"], "high": est["high"], "how": est["how"],
         "months_past_anchor": est["months_past_anchor"],

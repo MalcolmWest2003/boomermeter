@@ -29,6 +29,26 @@ GENERATIONS = [
 ]
 BOOMER_FIRST, BOOMER_LAST = 1946, 1964
 
+# Longer list for historical comparisons (Congress since 1900). Greatest onward
+# follow Pew; Lost (1883-1900) and Missionary (1860-1882) follow Strauss & Howe.
+HIST_GENERATIONS = [
+    ("Missionary", 1860, 1882),
+    ("Lost", 1883, 1900),
+    ("Greatest", 1901, 1927),
+    ("Silent", 1928, 1945),
+    ("Boomer", 1946, 1964),
+    ("Gen X", 1965, 1980),
+    ("Millennial", 1981, 1996),
+    ("Gen Z", 1997, 2012),
+]
+
+
+def hist_generation_of(birth_year: int) -> str | None:
+    for name, lo, hi in HIST_GENERATIONS:
+        if lo <= birth_year <= hi:
+            return name
+    return None
+
 
 def today() -> dt.date:
     """Run date. BM_TODAY overrides it for tests and backfills."""

@@ -85,6 +85,44 @@ def _ind_map(hist: dict) -> dict:
     return {i["id"]: i for i in hist.get("indicators", [])}
 
 
+GEN_MID = {"Silent": 1936.5, "Boomer": 1955.0, "Gen X": 1972.5, "Millennial": 1988.5, "Gen Z": 2004.5}
+
+
+def view_picker() -> str:
+    return ('<div class="agepick viewpick" role="group" aria-label="Chart view"><span>Show</span>'
+            '<button type="button" data-view="age" aria-pressed="true">By age</button>'
+            '<button type="button" data-view="year" aria-pressed="false">By year</button></div>')
+
+
+def by_age_chart(ind: dict, ages: list[int], cid: str, y_ticks: list[float], tick_fmt: str) -> tuple[str, list[str]]:
+    """One line per generation: the indicator in the year that generation's
+    middle birth year reached each age. Makes the same-age comparison visual."""
+    vals = dict(zip(ind["years"], ind["values"]))
+    series = []
+    for gen, mid in GEN_MID.items():
+        pts = [(y - mid, v) for y, v in vals.items() if 15 <= y - mid <= 70]
+        if len(pts) >= 3:
+            series.append({"name": GEN_SHORT[gen], "points": pts, "color": GEN_VARS[gen], "tt_fmt": ind["fmt"],
+                           "width": 2.4 if gen == "Boomer" else 1.8})
+    if not series:
+        return "", []
+    a0 = min(p[0][0] for p in (s["points"] for s in series))
+    a1 = max(p[-1][0] for p in (s["points"] for s in series))
+    a0, a1 = max(15, int(a0) // 5 * 5), min(70, int(a1) // 5 * 5 + 5)
+    marks = [{"x0": a - 0.3, "x1": a + 0.3, "color": "--ink-3", "label": f"age {a}", "age": a, "strong": True} for a in ages]
+    svg = line_chart(cid, series=series, x_domain=(a0, a1), y_domain=(0, y_ticks[-1]),
+                     x_ticks=[(a, str(a)) for a in range((a0 // 10 + 1) * 10, a1 + 1, 10)],
+                     y_ticks=y_ticks, y_fmt=tick_fmt, x_fmt=lambda x: f"average age {x:.0f}", windows=marks,
+                     height=280, aria=f"{ind['title']}, by the age of each generation's average member")
+    names = {v: k for k, v in GEN_SHORT.items()}
+    return svg, [names[s["name"]] for s in series]
+
+
+def gen_legend(gens: list[str]) -> str:
+    return '<div class="legend">' + "".join(
+        f'<span class="lg"><i style="background:var({GEN_VARS[g]})"></i>{esc(GEN_SHORT[g])}</span>' for g in gens) + "</div>"
+
+
 def age_picker(ages: list[int], default: int) -> str:
     btns = "".join(f'<button type="button" data-age="{a}" aria-pressed="{str(a == default).lower()}">{a}</button>'
                    for a in ages)
@@ -172,6 +210,11 @@ def chart_block(spec: dict, inds: dict, ages: list[int], cid: str) -> str:
                      x_ticks=[(y, str(y)) for y in range((x0 // 10 + 1) * 10, x1 + 1, 10)],
                      y_ticks=y_ticks, y_fmt=tick_fmt, x_fmt=lambda x: str(int(x)),
                      windows=_windows(compare, ages) if compare else (), height=280, aria=first["title"])
+    age_view, gens = by_age_chart(compare, ages, cid + "-age", y_ticks, tick_fmt) if compare else ("", [])
+    if age_view:
+        svg = (f'<div class="v-age">{gen_legend(gens)}{age_view}<p class="caption">Each line follows one generation: '
+               f'the value in the year its average member (middle birth year) reached each age. The marked age is '
+               f'the one the cards below compare.</p></div><div class="v-year">{svg}</div>')
     legend = ""
     if len(present) > 1:
         legend = '<div class="legend">' + "".join(
@@ -203,6 +246,7 @@ def topic_page(key: str, hist: dict, extra: str = "") -> str:
   <p class="kicker"><a href="index.html">Boomermeter</a> / {esc(t["title"])}</p>
   <h1>{esc(t["title"])}</h1>
   <p class="hero-lede">{esc(t["lede"])}</p>
+  {view_picker()}
   {age_picker(ages, default)}
   <p class="caption">Shaded spans mark the years each generation was turning that age (Boomers, born 1946–64, turned 30
   in 1976–94). Each card is the average over those years; its range is the lowest and highest year. Generations still

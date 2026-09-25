@@ -76,6 +76,9 @@ def compute(parsed: dict, prov: list[dict], today: dt.date, reg: dict) -> tuple[
             "boomer": [{"date": q.isoformat(), "value": v} for q, v in sorted(b.items())],
             "by_generation": {g: [{"date": q.isoformat(), "value": v} for q, v in sorted(s.items())]
                               for g, s in sh[col]["by_generation"].items()},
+            # dollar levels ($ millions, nominal) by generation, for per-adult comparisons
+            "levels": {g: [{"date": q.isoformat(), "value": v} for q, v in sorted(lv.items())]
+                       for g, lv in parsed["levels"][col].items()},
             "peak": max(b.items(), key=lambda kv: kv[1]),
         }
         site["series"][col]["peak"] = {"date": site["series"][col]["peak"][0].isoformat(),
