@@ -6,6 +6,8 @@ from .svg import esc, line_chart
 
 GEN_VARS = {"Silent": "--gen-silent", "Boomer": "--gen-boomer", "Gen X": "--gen-x",
             "Millennial": "--gen-millennial", "Gen Z": "--gen-z"}
+GEN_SHORT = {"Silent": "Silent", "Boomer": "Boomers", "Gen X": "Gen X", "Millennial": "Millennials",
+             "Gen Z": "Gen Z"}
 GEN_PLURAL = {"Silent": "the Silent Generation", "Boomer": "Boomers", "Gen X": "Gen X",
               "Millennial": "Millennials", "Gen Z": "Gen Z"}
 
@@ -135,7 +137,7 @@ def _windows(ind: dict, ages: list[int]) -> list[dict]:
     for age in ages:
         for gen, v in ind["at_age"].get(str(age), {}).items():
             out.append({"x0": v["window"][0], "x1": v["window"][1] + 1, "color": GEN_VARS[gen],
-                        "label": f"{GEN_PLURAL[gen]} at {age}", "age": age})
+                        "label": GEN_SHORT[gen], "age": age})
     return out
 
 

@@ -55,10 +55,12 @@ def line_chart(cid: str, *, series=(), bands=(), x_domain, y_domain, x_ticks, y_
         x0, x1 = max(wd["x0"], x_domain[0]), min(wd["x1"], x_domain[1])
         if x1 <= x0:
             continue
+        wpx = sx(x1) - sx(x0)
+        label = (f'<text class="gwlabel" x="{sx(x0) + 4:.1f}" y="{M["t"] + 12}" style="fill:var({wd["color"]})">'
+                 f'{esc(wd["label"])}</text>') if wpx >= 7.5 * len(wd["label"]) else ""
         out.append(f'<g class="gw" data-age="{wd["age"]}"><rect x="{sx(x0):.1f}" y="{M["t"]}" '
-                   f'width="{sx(x1) - sx(x0):.1f}" height="{h - M["t"] - M["b"]}" style="fill:var({wd["color"]})"/>'
-                   f'<text class="gwlabel" x="{sx(x0) + 4:.1f}" y="{M["t"] + 12}" style="fill:var({wd["color"]})">'
-                   f'{esc(wd["label"])}</text></g>')
+                   f'width="{wpx:.1f}" height="{h - M["t"] - M["b"]}" style="fill:var({wd["color"]})">'
+                   f'<title>{esc(wd["label"])}: {wd["x0"]}–{wd["x1"] - 1}</title></rect>{label}</g>')
     for b in bands:
         pts = [(x, y) for x, y in b["upper"]] + [(x, y) for x, y in reversed(b["lower"])]
         d = _path(pts, sx, sy) + " Z"

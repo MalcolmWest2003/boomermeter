@@ -26,6 +26,15 @@ scope** until the site is robust.
   is computed live (N was 12 as of Sept 2026).
 - **Host-agnostic Python.** It runs on GitHub Actions daily. The owner may move it to a Raspberry Pi later; keep it
   runnable with `python -m bm.run` and no cloud-specific code outside `.github/`.
+- **Site structure (Sept 2026):** the home page is the meter plus landmarks plus an "explore" grid; each topic has its
+  own page (population, wealth, power, housing, work, college, taxes, sources, methods). Topic pages compare
+  generations **at the same age** (window = years a generation's birth years turned that age; value = mean over the
+  window; range = min–max year), with an age picker (25/30/35/40). This is the house device for "then vs now".
+- **Numbers that cut against the framing stay on the page.** E.g. the mortgage *payment* share at 30 was higher for
+  Boomers (1980s rates) and the typical worker's real wage at 30 is higher for Millennials. The pages say so and
+  point to the measures where the squeeze is real (price-to-income, down payment, labor/profit shares, tuition).
+- **Published estimates, not our own, where no official statistic exists** (e.g. billionaire tax rates):
+  `registry/literature.yaml`, each with what it measures and the critique beside it.
 - **Build order from the original brief:** ledger + registry → fetch layer → Tier 1 metrics → house style → (later)
   compose/queue/batch review → X posting last.
 
@@ -37,9 +46,11 @@ bm/snapshot.py        immutable dated snapshots + sha256 manifest (never overwri
 bm/ledger.py          append-only record of every displayed number; auto-logs corrections
 bm/registry.py        loads/validates registry/metrics.yaml (every metric must be registered)
 bm/landmarks.py       multi-window trend crossings -> central date + range
-bm/sources/*.py       congress-legislators, Census PEP + projections, Fed DFA
-bm/metrics/*.py       headcount (meter), congress, wealth
-bm/site/              static site builder, SVG charts, CSS, hover JS
+bm/sources/*.py       congress-legislators, Census PEP + projections, Fed DFA, FRED, NCES, IRS SOI
+bm/metrics/*.py       headcount (meter), congress, wealth, history (generations at the same age)
+bm/site/              static site builder (build.py pages, topics.py topic pages), SVG charts, CSS, JS
+bm/probe.py           prints what sources return; run on GitHub runners by .github/workflows/probe.yml
+registry/literature.yaml  published estimates shown on the taxes page
 bm/run.py             orchestrator; each source isolated; failures -> run_status.json
 METHODS.md            rendered to methods.html; keep in sync with code
 tests/                pytest; tests/synthetic.py makes fake files in the expected layouts
@@ -48,6 +59,12 @@ data/                 committed by the workflow: snapshots, ledger.jsonl, correc
 
 Local preview with fake Census/Fed data (the page shows a PREVIEW banner):
 `BM_DATA_DIR=/tmp/d BM_SITE_DIR=/tmp/s python -m bm.run --demo`
+
+**Cloud sessions can't reach the data hosts** (census.gov, federalreserve.gov, FRED, BLS, NCES, IRS are blocked by the
+session's network policy). Work around it with the probe workflow: it runs on every push to a `claude/**` branch and
+prints what sources return (`PROBE_ARGS` in `.github/workflows/probe.yml`: `--history` for the history indicators on
+live data, a FRED id, or a spreadsheet URL for every row). Read the job log with the GitHub tools. To preview real
+data locally, copy `data/` to a temp dir and run `bm.run` against it: failed fetches fall back to saved state.
 
 ## Verified vs. assumed (as of the first build, Sept 25, 2026)
 
@@ -74,6 +91,16 @@ Actions run:
   fails with the actual column list if it can't.
 - Both census.gov and federalreserve.gov accept requests from GitHub runners (confirmed on the first run).
 
+Verified on GitHub runners via the probe (Sept 25, 2026):
+- **FRED** `fredgraph.csv?id=` works without a key; header is `observation_date,<ID>`; missing values are `.`.
+  All series in `history.FRED_SERIES` return data (1913–2026 depending on series).
+- **NCES table 330.10** (Digest 2024 edition): public 4-year in-state tuition and fees = the column after the
+  "Tuition and required fees" header's first column, in the "Public institutions" section. d24 cells are strings like
+  "$1,248"; d23 were numbers. 1964–67 are missing in the source.
+- **IRS SOI table 23** (`histab23.xls`): highest-bracket rate in column 6 with footnote markers like "[19] 91.0";
+  the table ends in 2018 (37%). Later years are a labeled statutory carry-forward.
+- **Census HVS table 19** (homeownership by age) exists at `hvs/data/histtab19.xlsx` but starts in 1994; not used yet.
+
 Checks after the first real run:
 - Boomer headcount for July 1, 2024 should be close to Pew's "about 67 million" (same convention).
 - Boomer share of net worth should match the Fed's DFA web page for the latest quarter.
@@ -81,10 +108,14 @@ Checks after the first real run:
 
 ## Known next steps
 
-1. First real run: fix any layout mismatches above (parsers raise with the real column list).
+1. Wealth at the same age from the Fed DFA (already fetched): each generation's share of net worth when it averaged
+   about 35 (Boomers 1989–90 vs Millennials now), with real dollars. The strongest wealth comparison we can make.
 2. Replace the 78.8M peak constant with a value computed from Census 1990s intercensal single-year-of-age files
    using the same convention (keep the constant as a cross-check).
-3. Remaining Tier 1: homeownership rate by age (Census HVS), labor force participation 65+ (BLS).
+3. Remaining Tier 1: homeownership rate by age (Census HVS table 19, 1994+; earlier years need another source),
+   labor force participation 65+ (BLS).
+3b. College net price (College Board Trends in College Pricing) next to the sticker-price series; statutory
+   corporate rate history next to the effective rate.
 4. Tier 2: Boomer share of voters vs. share of adults (CPS Voting Supplement), median age of committee chairs.
 5. Later: X snapshot images (matplotlib house style with a source footer in the image), batch review queue.
 
