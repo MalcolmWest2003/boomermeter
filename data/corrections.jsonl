@@ -1,0 +1,13 @@
+{"recorded": "2026-09-30", "metric_id": "hist_labor_share@Gen Z@18", "as_of": "2030-12-31", "was": "52.9%", "now": "52.6%", "reason": "source revised a previously published value"}
+{"recorded": "2026-09-30", "metric_id": "hist_labor_share@Gen Z@21", "as_of": "2033-12-31", "was": "52.8%", "now": "52.5%", "reason": "source revised a previously published value"}
+{"recorded": "2026-09-30", "metric_id": "hist_labor_share@Gen Z@25", "as_of": "2037-12-31", "was": "51.8%", "now": "51.4%", "reason": "source revised a previously published value"}
+{"recorded": "2026-09-30", "metric_id": "hist_labor_share@Millennial@30", "as_of": "2026-12-31", "was": "52.8%", "now": "52.6%", "reason": "source revised a previously published value"}
+{"recorded": "2026-09-30", "metric_id": "hist_labor_share@Millennial@35", "as_of": "2031-12-31", "was": "52.9%", "now": "52.6%", "reason": "source revised a previously published value"}
+{"recorded": "2026-09-30", "metric_id": "hist_labor_share@Millennial@40", "as_of": "2036-12-31", "was": "52.1%", "now": "51.7%", "reason": "source revised a previously published value"}
+{"recorded": "2026-09-30", "metric_id": "hist_profit_share@Gen Z@18", "as_of": "2030-12-31", "was": "10.8%", "now": "10.7%", "reason": "source revised a previously published value"}
+{"recorded": "2026-09-30", "metric_id": "hist_profit_share@Gen Z@21", "as_of": "2033-12-31", "was": "11.1%", "now": "11.0%", "reason": "source revised a previously published value"}
+{"recorded": "2026-09-30", "metric_id": "hist_profit_share@Gen Z@25", "as_of": "2037-12-31", "was": "11.6%", "now": "11.5%", "reason": "source revised a previously published value"}
+{"recorded": "2026-09-30", "metric_id": "hist_profit_share@Millennial@35", "as_of": "2031-12-31", "was": "10.9%", "now": "10.8%", "reason": "source revised a previously published value"}
+{"recorded": "2026-09-30", "metric_id": "hist_profit_share@Millennial@40", "as_of": "2036-12-31", "was": "11.8%", "now": "11.7%", "reason": "source revised a previously published value"}
+{"recorded": "2026-09-30", "metric_id": "hist_corp_effective_tax", "as_of": "2025-12-31", "was": "12%", "now": "11%", "reason": "source revised a previously published value"}
+{"recorded": "2026-09-30", "metric_id": "hist_corp_effective_tax@Gen Z@25", "as_of": "2037-12-31", "was": "12%", "now": "11%", "reason": "source revised a previously published value"}
