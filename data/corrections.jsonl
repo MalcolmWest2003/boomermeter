@@ -11,3 +11,4 @@
 {"recorded": "2026-09-30", "metric_id": "hist_profit_share@Millennial@40", "as_of": "2036-12-31", "was": "11.8%", "now": "11.7%", "reason": "source revised a previously published value"}
 {"recorded": "2026-09-30", "metric_id": "hist_corp_effective_tax", "as_of": "2025-12-31", "was": "12%", "now": "11%", "reason": "source revised a previously published value"}
 {"recorded": "2026-09-30", "metric_id": "hist_corp_effective_tax@Gen Z@25", "as_of": "2037-12-31", "was": "12%", "now": "11%", "reason": "source revised a previously published value"}
+{"recorded": "2026-10-01", "metric_id": "handoff_power_transferred@Greatest@years_after_peak", "as_of": "1982-09-14", "was": "56%", "now": "57%", "reason": "source revised a previously published value"}
