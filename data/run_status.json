@@ -1,4 +1,10 @@
 {
- "run_date": "2026-10-20",
- "failures": []
+ "run_date": "2026-10-21",
+ "failures": [
+  {
+   "section": "history",
+   "error": "ValueError: FRED MORTGAGE30US: unexpected header ['<!doctype html>']",
+   "trace": "Traceback (most recent call last):\n  File \"/home/runner/work/boomermeter/boomermeter/bm/run.py\", line 79, in section\n    entries, data = fn()\n                    ^^^^\n  File \"/home/runner/work/boomermeter/boomermeter/bm/run.py\", line 124, in do_history\n    obs, prov[sid] = fred.fetch(sid)\n                     ^^^^^^^^^^^^^^^\n  File \"/home/runner/work/boomermeter/boomermeter/bm/sources/fred.py\", line 39, in fetch\n    return parse(snap.content, sid), snap.provenance()\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/boomermeter/boomermeter/bm/sources/fred.py\", line 26, in parse\n    raise ValueError(f\"FRED {sid}: unexpected header {header}\")\nValueError: FRED MORTGAGE30US: unexpected header ['<!doctype html>']\n"
+  }
+ ]
 }
