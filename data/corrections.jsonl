@@ -18,3 +18,9 @@
 {"recorded": "2026-10-29", "metric_id": "hist_profit_share@Gen Z@25", "as_of": "2037-12-31", "was": "11.6%", "now": "11.5%", "reason": "source revised a previously published value"}
 {"recorded": "2026-10-29", "metric_id": "hist_profit_share@Millennial@35", "as_of": "2031-12-31", "was": "10.9%", "now": "10.8%", "reason": "source revised a previously published value"}
 {"recorded": "2026-10-29", "metric_id": "hist_profit_share@Millennial@40", "as_of": "2036-12-31", "was": "11.8%", "now": "11.7%", "reason": "source revised a previously published value"}
+{"recorded": "2026-11-05", "metric_id": "hist_productivity_index", "as_of": "2025-12-31", "was": "511", "now": "514", "reason": "source revised a previously published value"}
+{"recorded": "2026-11-05", "metric_id": "hist_productivity_index@Gen Z@21", "as_of": "2033-12-31", "was": "477", "now": "478", "reason": "source revised a previously published value"}
+{"recorded": "2026-11-05", "metric_id": "hist_productivity_index@Gen Z@25", "as_of": "2037-12-31", "was": "493", "now": "494", "reason": "source revised a previously published value"}
+{"recorded": "2026-11-05", "metric_id": "hist_productivity_index@Millennial@30", "as_of": "2026-12-31", "was": "450", "now": "451", "reason": "source revised a previously published value"}
+{"recorded": "2026-11-05", "metric_id": "hist_productivity_index@Millennial@40", "as_of": "2036-12-31", "was": "491", "now": "492", "reason": "source revised a previously published value"}
+{"recorded": "2026-11-05", "metric_id": "hist_real_comp_index", "as_of": "2025-12-31", "was": "314", "now": "313", "reason": "source revised a previously published value"}
